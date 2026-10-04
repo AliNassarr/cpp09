@@ -1,21 +1,24 @@
 #ifndef RPN_HPP
 #define RPN_HPP
 
+#include <stack>
 #include <string>
 
-class RPN
-{
+class RPN {
 public:
-	static int calculate(const std::string& expression);
+    RPN();
+    RPN(const RPN& other);
+    RPN& operator=(const RPN& rhs);
+    ~RPN();
+
+    int calculate(const std::string& expression);
 
 private:
-	RPN();
-	RPN(const RPN& other);
-	RPN& operator=(const RPN& rhs);
-	~RPN();
+    std::stack<int> _operands;
 
-	static bool _isOperator(char c);
-	static int _applyOperation(int a, int b, char op);
+    static bool isOperator(const std::string& token);
+    static bool isDigit(const std::string& token);
+    static int executeOperation(int left, int right, const std::string& op);
 };
 
 #endif
