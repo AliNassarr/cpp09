@@ -8,9 +8,7 @@ int main(int argc, char** argv) {
     }
 
     try {
-        RPN calculator;
-        int result = calculator.calculate(argv[1]);
-        std::cout << result << std::endl;
+        std::cout << RPN::calculate(argv[1]) << std::endl;
     } catch (const std::exception&) {
         std::cerr << "Error" << std::endl;
         return 1;

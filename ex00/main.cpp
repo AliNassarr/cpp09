@@ -7,12 +7,12 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    BitcoinExchange exchange;
-    if (!exchange.loadDatabase("data.csv")) {
+    BitcoinExchange btc;
+    if (!btc.loadDatabase("data.csv")) {
         std::cerr << "Error: could not load database." << std::endl;
         return 1;
     }
 
-    exchange.evaluate(argv[1]);
+    btc.process(argv[1]);
     return 0;
 }

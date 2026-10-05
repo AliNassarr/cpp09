@@ -11,14 +11,11 @@ public:
     RPN& operator=(const RPN& rhs);
     ~RPN();
 
-    int calculate(const std::string& expression);
+    static int calculate(const std::string& expression);
 
 private:
-    std::stack<int> _operands;
-
-    static bool isOperator(const std::string& token);
-    static bool isDigit(const std::string& token);
-    static int executeOperation(int left, int right, const std::string& op);
+    static bool isOperator(char c);
+    static int applyOperation(int a, int b, char op);
 };
 
 #endif

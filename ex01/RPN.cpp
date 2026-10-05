@@ -5,69 +5,61 @@
 
 RPN::RPN() {}
 
-RPN::RPN(const RPN& other) : _operands(other._operands) {}
+RPN::RPN(const RPN& other) {
+    (void)other;
+}
 
 RPN& RPN::operator=(const RPN& rhs) {
-    if (this != &rhs) {
-        _operands = rhs._operands;
-    }
+    (void)rhs;
     return *this;
 }
 
 RPN::~RPN() {}
 
-bool RPN::isOperator(const std::string& token) {
-    return (token == "+" || token == "-" || token == "*" || token == "/");
+bool RPN::isOperator(char c) {
+    return (c == '+' || c == '-' || c == '*' || c == '/');
 }
 
-bool RPN::isDigit(const std::string& token) {
-    return (token.length() == 1 && std::isdigit(static_cast<unsigned char>(token[0])));
-}
-
-int RPN::executeOperation(int left, int right, const std::string& op) {
-    if (op == "+")
-        return left + right;
-    if (op == "-")
-        return left - right;
-    if (op == "*")
-        return left * right;
-    if (op == "/") {
-        if (right == 0)
+int RPN::applyOperation(int a, int b, char op) {
+    if (op == '+')
+        return a + b;
+    if (op == '-')
+        return a - b;
+    if (op == '*')
+        return a * b;
+    if (op == '/') {
+        if (b == 0)
             throw std::runtime_error("Error");
-        return left / right;
+        return a / b;
     }
     throw std::runtime_error("Error");
 }
 
 int RPN::calculate(const std::string& expression) {
-    while (!_operands.empty()) {
-        _operands.pop();
-    }
-
-    std::istringstream stream(expression);
+    std::stack<int> s;
+    std::istringstream iss(expression);
     std::string token;
 
-    while (stream >> token) {
-        if (isDigit(token)) {
-            _operands.push(token[0] - '0');
-        } else if (isOperator(token)) {
-            if (_operands.size() < 2)
+    while (iss >> token) {
+        if (token.length() == 1 && std::isdigit(static_cast<unsigned char>(token[0]))) {
+            s.push(token[0] - '0');
+        } else if (token.length() == 1 && isOperator(token[0])) {
+            if (s.size() < 2)
                 throw std::runtime_error("Error");
 
-            int right = _operands.top();
-            _operands.pop();
-            int left = _operands.top();
-            _operands.pop();
+            int b = s.top();
+            s.pop();
+            int a = s.top();
+            s.pop();
 
-            int result = executeOperation(left, right, token);
-            _operands.push(result);
+            s.push(applyOperation(a, b, token[0]));
         } else {
             throw std::runtime_error("Error");
         }
     }
 
-    if (_operands.size() != 1)
+    if (s.size() != 1)
         throw std::runtime_error("Error");
 
-    return _operands.top();
+    return s.top();
 }

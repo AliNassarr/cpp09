@@ -12,15 +12,14 @@ public:
     ~BitcoinExchange();
 
     bool loadDatabase(const std::string& dbPath);
-    void evaluate(const std::string& inputPath) const;
+    void process(const std::string& inputPath) const;
 
 private:
-    std::map<std::string, double> _rates;
+    std::map<std::string, double> _database;
 
     static std::string trim(const std::string& s);
     static bool isValidDate(const std::string& date);
-    static bool parseNumber(const std::string& s, double& value);
-    bool findRate(const std::string& date, double& rate) const;
+    static bool parseValue(const std::string& s, double& value);
 };
 
 #endif

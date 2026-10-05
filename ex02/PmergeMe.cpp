@@ -1,283 +1,309 @@
 #include "PmergeMe.hpp"
 #include <iostream>
-#include <sstream>
-#include <iomanip>
-#include <climits>
-#include <cstdlib>
-#include <cctype>
-#include <sys/time.h>
 #include <algorithm>
+#include <utility>
+#include <cstdlib>
+#include <cerrno>
+#include <climits>
+#include <sys/time.h>
+#include <iomanip>
 #include <stdexcept>
 
-#include <cerrno>
+PmergeMe::PmergeMe() {}
 
-PmergeMe::PmergeMe()
-    : _vecComparisons(0), _deqComparisons(0), _vecTimeUs(0.0), _deqTimeUs(0.0) {}
-
-PmergeMe::PmergeMe(const PmergeMe& other)
-    : _original(other._original),
-      _vectorSorted(other._vectorSorted),
-      _dequeSorted(other._dequeSorted),
-      _vecComparisons(other._vecComparisons),
-      _deqComparisons(other._deqComparisons),
-      _vecTimeUs(other._vecTimeUs),
-      _deqTimeUs(other._deqTimeUs) {}
+PmergeMe::PmergeMe(const PmergeMe& other) {
+    (void)other;
+}
 
 PmergeMe& PmergeMe::operator=(const PmergeMe& rhs) {
-    if (this != &rhs) {
-        _original = rhs._original;
-        _vectorSorted = rhs._vectorSorted;
-        _dequeSorted = rhs._dequeSorted;
-        _vecComparisons = rhs._vecComparisons;
-        _deqComparisons = rhs._deqComparisons;
-        _vecTimeUs = rhs._vecTimeUs;
-        _deqTimeUs = rhs._deqTimeUs;
-    }
+    (void)rhs;
     return *this;
 }
 
 PmergeMe::~PmergeMe() {}
 
-double PmergeMe::getMicroseconds() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return static_cast<double>(tv.tv_sec) * 1000000.0 + static_cast<double>(tv.tv_usec);
-}
+std::vector<std::size_t> PmergeMe::getJacobOrderVector(std::size_t n) {
+    std::vector<std::size_t> order;
+    if (n == 0)
+        return order;
 
-void PmergeMe::parseInput(int argc, char** argv, std::vector<int>& dest) {
-    dest.clear();
-    dest.reserve(argc - 1);
-
-    for (int i = 1; i < argc; ++i) {
-        std::string token = argv[i];
-        if (token.empty())
-            throw std::runtime_error("Error");
-
-        std::size_t start = 0;
-        if (token[0] == '+') {
-            start = 1;
-            if (token.length() == 1)
-                throw std::runtime_error("Error");
-        }
-
-        for (std::size_t j = start; j < token.length(); ++j) {
-            if (!std::isdigit(static_cast<unsigned char>(token[j])))
-                throw std::runtime_error("Error");
-        }
-
-        char* endptr = NULL;
-        errno = 0;
-        long val = std::strtol(token.c_str(), &endptr, 10);
-        if (errno == ERANGE || *endptr != '\0' || val < 0 || val > INT_MAX)
-            throw std::runtime_error("Error");
-
-        int intVal = static_cast<int>(val);
-        for (std::size_t k = 0; k < dest.size(); ++k) {
-            if (dest[k] == intVal)
-                throw std::runtime_error("Error");
-        }
-
-        dest.push_back(intVal);
+    std::vector<std::size_t> j;
+    j.push_back(0);
+    j.push_back(1);
+    while (j.back() < n) {
+        j.push_back(j[j.size() - 1] + 2 * j[j.size() - 2]);
     }
-}
 
-template <typename Container>
-typename ContainerTraits<Container>::IndexContainer PmergeMe::generateJacobsthal(std::size_t size) {
-    typename ContainerTraits<Container>::IndexContainer seq;
-    if (size == 0)
-        return seq;
-
-    seq.push_back(0);
-    if (size == 1)
-        return seq;
-
-    seq.push_back(1);
-    while (seq.back() < size) {
-        std::size_t nextVal = seq[seq.size() - 1] + 2 * seq[seq.size() - 2];
-        seq.push_back(nextVal);
-    }
-    return seq;
-}
-
-template <typename Container>
-typename ContainerTraits<Container>::IndexContainer PmergeMe::buildInsertionOrder(
-    const typename ContainerTraits<Container>::IndexContainer& jacobSeq,
-    std::size_t pendSize) {
-    typename ContainerTraits<Container>::IndexContainer order;
-    typename ContainerTraits<Container>::BoolContainer visited(pendSize + 1, false);
-
-    for (std::size_t i = 0; i < jacobSeq.size(); ++i) {
-        std::size_t idx = jacobSeq[i];
-        while (idx > 1 && idx <= pendSize) {
-            if (!visited[idx]) {
-                order.push_back(idx);
-                visited[idx] = true;
+    std::vector<bool> added(n + 1, false);
+    for (std::size_t i = 1; i < j.size(); ++i) {
+        std::size_t val = j[i];
+        while (val > j[i - 1] && val <= n) {
+            if (!added[val]) {
+                order.push_back(val - 1);
+                added[val] = true;
             }
-            --idx;
+            --val;
         }
     }
-
-    for (std::size_t idx = 2; idx <= pendSize; ++idx) {
-        if (!visited[idx]) {
-            order.push_back(idx);
-            visited[idx] = true;
-        }
+    for (std::size_t i = 1; i <= n; ++i) {
+        if (!added[i])
+            order.push_back(i - 1);
     }
     return order;
 }
 
-template <typename Container>
-std::size_t PmergeMe::binarySearchPosition(
-    const Container& chain,
-    int target,
-    std::size_t upperBound,
-    std::size_t& comparisons) {
-    if (chain.empty())
-        return 0;
+std::deque<std::size_t> PmergeMe::getJacobOrderDeque(std::size_t n) {
+    std::deque<std::size_t> order;
+    if (n == 0)
+        return order;
 
-    int low = 0;
-    int high = static_cast<int>(upperBound);
-    if (high >= static_cast<int>(chain.size()))
-        high = static_cast<int>(chain.size()) - 1;
-
-    while (low <= high) {
-        int mid = low + (high - low) / 2;
-        comparisons++;
-        if (chain[mid] >= target)
-            high = mid - 1;
-        else
-            low = mid + 1;
+    std::deque<std::size_t> j;
+    j.push_back(0);
+    j.push_back(1);
+    while (j.back() < n) {
+        j.push_back(j[j.size() - 1] + 2 * j[j.size() - 2]);
     }
-    return static_cast<std::size_t>(low);
+
+    std::deque<bool> added(n + 1, false);
+    for (std::size_t i = 1; i < j.size(); ++i) {
+        std::size_t val = j[i];
+        while (val > j[i - 1] && val <= n) {
+            if (!added[val]) {
+                order.push_back(val - 1);
+                added[val] = true;
+            }
+            --val;
+        }
+    }
+    for (std::size_t i = 1; i <= n; ++i) {
+        if (!added[i])
+            order.push_back(i - 1);
+    }
+    return order;
 }
 
-template <typename Container>
-void PmergeMe::insertPending(Container& mainChain, const Container& pendChain, std::size_t& comparisons) {
-    if (pendChain.empty())
+void PmergeMe::sortVector(std::vector<int>& arr) {
+    std::size_t n = arr.size();
+    if (n <= 1)
         return;
 
-    typename ContainerTraits<Container>::IndexContainer jacobSeq =
-        generateJacobsthal<Container>(pendChain.size());
-    typename ContainerTraits<Container>::IndexContainer order =
-        buildInsertionOrder<Container>(jacobSeq, pendChain.size());
-
-    std::size_t searchLimit = 3;
-    mainChain.insert(mainChain.begin(), pendChain[0]);
-
-    for (std::size_t i = 0; i < order.size(); ++i) {
-        if (i > 0 && order[i] > order[i - 1]) {
-            if (searchLimit <= mainChain.size() / 2)
-                searchLimit = 2 * searchLimit + 1;
-            else
-                searchLimit = mainChain.size();
-        }
-
-        if (order[i] <= pendChain.size() && order[i] != 1) {
-            std::size_t pendIdx = order[i] - 1;
-            int targetVal = pendChain[pendIdx];
-            std::size_t maxSearchIdx = std::min(searchLimit - 1, mainChain.size());
-            std::size_t pos = binarySearchPosition(mainChain, targetVal, maxSearchIdx, comparisons);
-            mainChain.insert(mainChain.begin() + pos, targetVal);
-        }
-    }
-}
-
-template <typename Container>
-Container PmergeMe::recursiveMergeInsert(Container& container, std::size_t& comparisons) {
-    if (container.size() <= 1)
-        return container;
-
-    if (container.size() == 2) {
-        Container result = container;
-        comparisons++;
-        if (result[0] > result[1])
-            std::swap(result[0], result[1]);
-        return result;
+    bool hasStraggler = (n % 2 != 0);
+    int straggler = 0;
+    if (hasStraggler) {
+        straggler = arr.back();
+        arr.pop_back();
     }
 
-    bool isOdd = (container.size() % 2 == 1);
-    Container mainChain;
-    Container pendChain;
-
-    for (std::size_t i = 0; i < container.size() - (isOdd ? 1 : 0); i += 2) {
-        comparisons++;
-        if (container[i] > container[i + 1]) {
-            mainChain.push_back(container[i]);
-            pendChain.push_back(container[i + 1]);
-        } else {
-            pendChain.push_back(container[i]);
-            mainChain.push_back(container[i + 1]);
-        }
+    // 1. Group adjacent elements into pairs of (larger, smaller)
+    std::vector<std::pair<int, int> > pairs;
+    for (std::size_t i = 0; i < arr.size(); i += 2) {
+        if (arr[i] > arr[i + 1])
+            pairs.push_back(std::make_pair(arr[i], arr[i + 1]));
+        else
+            pairs.push_back(std::make_pair(arr[i + 1], arr[i]));
     }
 
-    if (isOdd)
-        pendChain.push_back(container.back());
+    // 2. Extract larger elements to form mainChain and sort recursively
+    std::vector<int> mainChain;
+    for (std::size_t i = 0; i < pairs.size(); ++i)
+        mainChain.push_back(pairs[i].first);
 
-    Container sortedMain = recursiveMergeInsert(mainChain, comparisons);
+    sortVector(mainChain);
 
-    Container alignedPend;
-    for (std::size_t i = 0; i < sortedMain.size(); ++i) {
-        for (std::size_t j = 0; j < mainChain.size(); ++j) {
-            if (mainChain[j] == sortedMain[i]) {
-                alignedPend.push_back(pendChain[j]);
+    // 3. Align pending elements with the sorted mainChain
+    std::vector<int> pend;
+    std::vector<bool> used(pairs.size(), false);
+    for (std::size_t i = 0; i < mainChain.size(); ++i) {
+        for (std::size_t j = 0; j < pairs.size(); ++j) {
+            if (!used[j] && pairs[j].first == mainChain[i]) {
+                pend.push_back(pairs[j].second);
+                used[j] = true;
                 break;
             }
         }
     }
 
-    if (isOdd)
-        alignedPend.push_back(pendChain.back());
+    // 4. Insert first pend element into mainChain at index 0 (0 comparisons)
+    mainChain.insert(mainChain.begin(), pend[0]);
 
-    insertPending(sortedMain, alignedPend, comparisons);
-    return sortedMain;
-}
+    // 5. Insert remaining pend elements in Jacobsthal order using binary search (lower_bound)
+    if (pend.size() > 1) {
+        std::vector<std::size_t> order = getJacobOrderVector(pend.size());
+        for (std::size_t i = 0; i < order.size(); ++i) {
+            std::size_t idx = order[i];
+            if (idx == 0)
+                continue;
 
-template <typename Container>
-void PmergeMe::fordJohnsonSort(Container& container, std::size_t& comparisons) {
-    comparisons = 0;
-    if (container.size() <= 1)
-        return;
-    container = recursiveMergeInsert(container, comparisons);
-}
+            int val = pend[idx];
+            int partner = 0;
+            for (std::size_t j = 0; j < pairs.size(); ++j) {
+                if (pairs[j].second == val) {
+                    partner = pairs[j].first;
+                    break;
+                }
+            }
 
-void PmergeMe::printSequence(const std::vector<int>& seq, const std::string& prefix) const {
-    std::cout << prefix;
-    for (std::size_t i = 0; i < seq.size(); ++i) {
-        if (i > 0)
-            std::cout << " ";
-        std::cout << seq[i];
+            std::vector<int>::iterator itPartner = std::find(mainChain.begin(), mainChain.end(), partner);
+            std::vector<int>::iterator pos = std::lower_bound(mainChain.begin(), itPartner, val);
+            mainChain.insert(pos, val);
+        }
     }
-    std::cout << std::endl;
+
+    // 6. Insert odd straggler if present
+    if (hasStraggler) {
+        std::vector<int>::iterator pos = std::lower_bound(mainChain.begin(), mainChain.end(), straggler);
+        mainChain.insert(pos, straggler);
+    }
+
+    arr = mainChain;
 }
 
-void PmergeMe::printBenchmark() const {
-    std::cout << "Time to process a range of " << _original.size()
-              << " elements with std::vector : " << std::fixed << std::setprecision(5)
-              << _vecTimeUs << " us" << std::endl;
-    std::cout << "Time to process a range of " << _original.size()
-              << " elements with std::deque  : " << std::fixed << std::setprecision(5)
-              << _deqTimeUs << " us" << std::endl;
-    std::cout << "Number of comparisons with std::vector : " << _vecComparisons << std::endl;
-    std::cout << "Number of comparisons with std::deque  : " << _deqComparisons << std::endl;
+void PmergeMe::sortDeque(std::deque<int>& arr) {
+    std::size_t n = arr.size();
+    if (n <= 1)
+        return;
+
+    bool hasStraggler = (n % 2 != 0);
+    int straggler = 0;
+    if (hasStraggler) {
+        straggler = arr.back();
+        arr.pop_back();
+    }
+
+    // 1. Group adjacent elements into pairs of (larger, smaller)
+    std::deque<std::pair<int, int> > pairs;
+    for (std::size_t i = 0; i < arr.size(); i += 2) {
+        if (arr[i] > arr[i + 1])
+            pairs.push_back(std::make_pair(arr[i], arr[i + 1]));
+        else
+            pairs.push_back(std::make_pair(arr[i + 1], arr[i]));
+    }
+
+    // 2. Extract larger elements to form mainChain and sort recursively
+    std::deque<int> mainChain;
+    for (std::size_t i = 0; i < pairs.size(); ++i)
+        mainChain.push_back(pairs[i].first);
+
+    sortDeque(mainChain);
+
+    // 3. Align pending elements with the sorted mainChain
+    std::deque<int> pend;
+    std::deque<bool> used(pairs.size(), false);
+    for (std::size_t i = 0; i < mainChain.size(); ++i) {
+        for (std::size_t j = 0; j < pairs.size(); ++j) {
+            if (!used[j] && pairs[j].first == mainChain[i]) {
+                pend.push_back(pairs[j].second);
+                used[j] = true;
+                break;
+            }
+        }
+    }
+
+    // 4. Insert first pend element into mainChain at index 0 (0 comparisons)
+    mainChain.push_front(pend[0]);
+
+    // 5. Insert remaining pend elements in Jacobsthal order using binary search (lower_bound)
+    if (pend.size() > 1) {
+        std::deque<std::size_t> order = getJacobOrderDeque(pend.size());
+        for (std::size_t i = 0; i < order.size(); ++i) {
+            std::size_t idx = order[i];
+            if (idx == 0)
+                continue;
+
+            int val = pend[idx];
+            int partner = 0;
+            for (std::size_t j = 0; j < pairs.size(); ++j) {
+                if (pairs[j].second == val) {
+                    partner = pairs[j].first;
+                    break;
+                }
+            }
+
+            std::deque<int>::iterator itPartner = std::find(mainChain.begin(), mainChain.end(), partner);
+            std::deque<int>::iterator pos = std::lower_bound(mainChain.begin(), itPartner, val);
+            mainChain.insert(pos, val);
+        }
+    }
+
+    // 6. Insert odd straggler if present
+    if (hasStraggler) {
+        std::deque<int>::iterator pos = std::lower_bound(mainChain.begin(), mainChain.end(), straggler);
+        mainChain.insert(pos, straggler);
+    }
+
+    arr = mainChain;
 }
 
 void PmergeMe::run(int argc, char** argv) {
-    parseInput(argc, argv, _original);
+    std::vector<int> numbers;
+    numbers.reserve(argc - 1);
 
-    printSequence(_original, "Before:\t\t");
+    for (int i = 1; i < argc; ++i) {
+        std::string s = argv[i];
+        if (s.empty())
+            throw std::runtime_error("Error");
 
-    _vectorSorted = _original;
-    double startVec = getMicroseconds();
-    fordJohnsonSort(_vectorSorted, _vecComparisons);
-    double endVec = getMicroseconds();
-    _vecTimeUs = endVec - startVec;
+        std::size_t start = 0;
+        if (s[0] == '+') {
+            start = 1;
+            if (s.length() == 1)
+                throw std::runtime_error("Error");
+        }
 
-    _dequeSorted.assign(_original.begin(), _original.end());
-    double startDeq = getMicroseconds();
-    fordJohnsonSort(_dequeSorted, _deqComparisons);
-    double endDeq = getMicroseconds();
-    _deqTimeUs = endDeq - startDeq;
+        for (std::size_t j = start; j < s.length(); ++j) {
+            if (!std::isdigit(static_cast<unsigned char>(s[j])))
+                throw std::runtime_error("Error");
+        }
 
-    printSequence(_vectorSorted, "After:\t\t");
-    printBenchmark();
+        char* endptr = NULL;
+        errno = 0;
+        long val = std::strtol(s.c_str(), &endptr, 10);
+        if (errno == ERANGE || *endptr != '\0' || val < 0 || val > INT_MAX)
+            throw std::runtime_error("Error");
+
+        int num = static_cast<int>(val);
+        for (std::size_t k = 0; k < numbers.size(); ++k) {
+            if (numbers[k] == num)
+                throw std::runtime_error("Error");
+        }
+        numbers.push_back(num);
+    }
+
+    std::cout << "Before: ";
+    for (std::size_t i = 0; i < numbers.size(); ++i) {
+        if (i > 0)
+            std::cout << " ";
+        std::cout << numbers[i];
+    }
+    std::cout << std::endl;
+
+    std::vector<int> vecData = numbers;
+    std::deque<int> deqData(numbers.begin(), numbers.end());
+
+    struct timeval start, end;
+
+    gettimeofday(&start, NULL);
+    sortVector(vecData);
+    gettimeofday(&end, NULL);
+    double vecTime = (end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_usec - start.tv_usec);
+
+    gettimeofday(&start, NULL);
+    sortDeque(deqData);
+    gettimeofday(&end, NULL);
+    double deqTime = (end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_usec - start.tv_usec);
+
+    std::cout << "After:  ";
+    for (std::size_t i = 0; i < vecData.size(); ++i) {
+        if (i > 0)
+            std::cout << " ";
+        std::cout << vecData[i];
+    }
+    std::cout << std::endl;
+
+    std::cout << "Time to process a range of " << numbers.size()
+              << " elements with std::vector : " << std::fixed << std::setprecision(5)
+              << vecTime << " us" << std::endl;
+    std::cout << "Time to process a range of " << numbers.size()
+              << " elements with std::deque  : " << std::fixed << std::setprecision(5)
+              << deqTime << " us" << std::endl;
 }
