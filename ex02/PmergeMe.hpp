@@ -5,19 +5,19 @@
 #include <deque>
 #include <cstddef>
 
-class FordJohnsonMergeInsertSorter {
+class PmergeMe {
 public:
-    FordJohnsonMergeInsertSorter();
-    FordJohnsonMergeInsertSorter(const FordJohnsonMergeInsertSorter& other_sorter);
-    FordJohnsonMergeInsertSorter& operator=(const FordJohnsonMergeInsertSorter& rhs);
-    ~FordJohnsonMergeInsertSorter();
+    PmergeMe();
+    PmergeMe(const PmergeMe& other);
+    PmergeMe& operator=(const PmergeMe& rhs);
+    ~PmergeMe();
 
-    static void execute_ford_johnson_sort_using_vector(std::vector<int>& sequence_to_sort);
-    static void execute_ford_johnson_sort_using_deque(std::deque<int>& sequence_to_sort);
+    static void sortVector(std::vector<int>& arr);
+    static void sortDeque(std::deque<int>& arr);
 
 private:
-    static std::vector<std::size_t> generate_jacobsthal_insertion_sequence_for_vector(std::size_t pending_elements_count);
-    static std::deque<std::size_t> generate_jacobsthal_insertion_sequence_for_deque(std::size_t pending_elements_count);
+    static std::vector<size_t> getJacobOrderVector(size_t len);
+    static std::deque<size_t> getJacobOrderDeque(size_t len);
 };
 
 #endif
