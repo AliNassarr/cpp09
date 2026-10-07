@@ -3,24 +3,21 @@
 
 #include <vector>
 #include <deque>
-#include <string>
 #include <cstddef>
 
-class PmergeMe {
+class FordJohnsonMergeInsertSorter {
 public:
-    PmergeMe();
-    PmergeMe(const PmergeMe& other);
-    PmergeMe& operator=(const PmergeMe& rhs);
-    ~PmergeMe();
+    FordJohnsonMergeInsertSorter();
+    FordJohnsonMergeInsertSorter(const FordJohnsonMergeInsertSorter& other_sorter);
+    FordJohnsonMergeInsertSorter& operator=(const FordJohnsonMergeInsertSorter& rhs);
+    ~FordJohnsonMergeInsertSorter();
 
-    void run(int argc, char** argv);
-
-    static void sortVector(std::vector<int>& arr);
-    static void sortDeque(std::deque<int>& arr);
+    static void execute_ford_johnson_sort_using_vector(std::vector<int>& sequence_to_sort);
+    static void execute_ford_johnson_sort_using_deque(std::deque<int>& sequence_to_sort);
 
 private:
-    static std::vector<std::size_t> getJacobOrderVector(std::size_t n);
-    static std::deque<std::size_t>  getJacobOrderDeque(std::size_t n);
+    static std::vector<std::size_t> generate_jacobsthal_insertion_sequence_for_vector(std::size_t pending_elements_count);
+    static std::deque<std::size_t> generate_jacobsthal_insertion_sequence_for_deque(std::size_t pending_elements_count);
 };
 
 #endif

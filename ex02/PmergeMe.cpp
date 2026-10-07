@@ -1,309 +1,106 @@
 #include "PmergeMe.hpp"
-#include <iostream>
 #include <algorithm>
 #include <utility>
-#include <cstdlib>
-#include <cerrno>
-#include <climits>
-#include <sys/time.h>
-#include <iomanip>
-#include <stdexcept>
 
-PmergeMe::PmergeMe() {}
+FordJohnsonMergeInsertSorter::FordJohnsonMergeInsertSorter() {}
+FordJohnsonMergeInsertSorter::FordJohnsonMergeInsertSorter(const FordJohnsonMergeInsertSorter& other_sorter) { (void)other_sorter; }
+FordJohnsonMergeInsertSorter& FordJohnsonMergeInsertSorter::operator=(const FordJohnsonMergeInsertSorter& rhs) { (void)rhs; return *this; }
+FordJohnsonMergeInsertSorter::~FordJohnsonMergeInsertSorter() {}
 
-PmergeMe::PmergeMe(const PmergeMe& other) {
-    (void)other;
+std::vector<std::size_t> FordJohnsonMergeInsertSorter::generate_jacobsthal_insertion_sequence_for_vector(std::size_t pending_elements_count) {
+    std::vector<std::size_t> jacobsthal_sequence, insertion_sequence;
+    jacobsthal_sequence.push_back(0); jacobsthal_sequence.push_back(1);
+    for (std::size_t i = 2; jacobsthal_sequence.back() < pending_elements_count; ++i) jacobsthal_sequence.push_back(jacobsthal_sequence[i - 1] + 2 * jacobsthal_sequence[i - 2]);
+    for (std::size_t i = 2; i < jacobsthal_sequence.size(); ++i) {
+        std::size_t current_jacobsthal_number = std::min(jacobsthal_sequence[i], pending_elements_count);
+        for (std::size_t j = current_jacobsthal_number; j > jacobsthal_sequence[i - 1]; --j) insertion_sequence.push_back(j);
+    }
+    return insertion_sequence;
 }
 
-PmergeMe& PmergeMe::operator=(const PmergeMe& rhs) {
-    (void)rhs;
-    return *this;
-}
+void FordJohnsonMergeInsertSorter::execute_ford_johnson_sort_using_vector(std::vector<int>& sequence_to_sort) {
+    if (sequence_to_sort.size() < 2) return;
+    bool has_unpaired_odd_element = (sequence_to_sort.size() % 2 != 0);
+    int unpaired_odd_element = has_unpaired_odd_element ? sequence_to_sort.back() : 0;
+    if (has_unpaired_odd_element) sequence_to_sort.pop_back();
 
-PmergeMe::~PmergeMe() {}
+    std::vector<std::pair<int, int> > larger_and_smaller_element_pairs;
+    for (std::size_t i = 0; i < sequence_to_sort.size(); i += 2) larger_and_smaller_element_pairs.push_back(std::make_pair(std::max(sequence_to_sort[i], sequence_to_sort[i+1]), std::min(sequence_to_sort[i], sequence_to_sort[i+1])));
 
-std::vector<std::size_t> PmergeMe::getJacobOrderVector(std::size_t n) {
-    std::vector<std::size_t> order;
-    if (n == 0)
-        return order;
+    std::vector<int> recursive_larger_elements_sequence;
+    for (std::size_t i = 0; i < larger_and_smaller_element_pairs.size(); ++i) recursive_larger_elements_sequence.push_back(larger_and_smaller_element_pairs[i].first);
+    execute_ford_johnson_sort_using_vector(recursive_larger_elements_sequence);
 
-    std::vector<std::size_t> j;
-    j.push_back(0);
-    j.push_back(1);
-    while (j.back() < n) {
-        j.push_back(j[j.size() - 1] + 2 * j[j.size() - 2]);
-    }
-
-    std::vector<bool> added(n + 1, false);
-    for (std::size_t i = 1; i < j.size(); ++i) {
-        std::size_t val = j[i];
-        while (val > j[i - 1] && val <= n) {
-            if (!added[val]) {
-                order.push_back(val - 1);
-                added[val] = true;
-            }
-            --val;
-        }
-    }
-    for (std::size_t i = 1; i <= n; ++i) {
-        if (!added[i])
-            order.push_back(i - 1);
-    }
-    return order;
-}
-
-std::deque<std::size_t> PmergeMe::getJacobOrderDeque(std::size_t n) {
-    std::deque<std::size_t> order;
-    if (n == 0)
-        return order;
-
-    std::deque<std::size_t> j;
-    j.push_back(0);
-    j.push_back(1);
-    while (j.back() < n) {
-        j.push_back(j[j.size() - 1] + 2 * j[j.size() - 2]);
-    }
-
-    std::deque<bool> added(n + 1, false);
-    for (std::size_t i = 1; i < j.size(); ++i) {
-        std::size_t val = j[i];
-        while (val > j[i - 1] && val <= n) {
-            if (!added[val]) {
-                order.push_back(val - 1);
-                added[val] = true;
-            }
-            --val;
-        }
-    }
-    for (std::size_t i = 1; i <= n; ++i) {
-        if (!added[i])
-            order.push_back(i - 1);
-    }
-    return order;
-}
-
-void PmergeMe::sortVector(std::vector<int>& arr) {
-    std::size_t n = arr.size();
-    if (n <= 1)
-        return;
-
-    bool hasStraggler = (n % 2 != 0);
-    int straggler = 0;
-    if (hasStraggler) {
-        straggler = arr.back();
-        arr.pop_back();
-    }
-
-    // 1. Group adjacent elements into pairs of (larger, smaller)
-    std::vector<std::pair<int, int> > pairs;
-    for (std::size_t i = 0; i < arr.size(); i += 2) {
-        if (arr[i] > arr[i + 1])
-            pairs.push_back(std::make_pair(arr[i], arr[i + 1]));
-        else
-            pairs.push_back(std::make_pair(arr[i + 1], arr[i]));
-    }
-
-    // 2. Extract larger elements to form mainChain and sort recursively
-    std::vector<int> mainChain;
-    for (std::size_t i = 0; i < pairs.size(); ++i)
-        mainChain.push_back(pairs[i].first);
-
-    sortVector(mainChain);
-
-    // 3. Align pending elements with the sorted mainChain
-    std::vector<int> pend;
-    std::vector<bool> used(pairs.size(), false);
-    for (std::size_t i = 0; i < mainChain.size(); ++i) {
-        for (std::size_t j = 0; j < pairs.size(); ++j) {
-            if (!used[j] && pairs[j].first == mainChain[i]) {
-                pend.push_back(pairs[j].second);
-                used[j] = true;
+    std::vector<int> sorted_main_chain, pending_elements_to_insert;
+    for (std::size_t i = 0; i < recursive_larger_elements_sequence.size(); ++i) {
+        sorted_main_chain.push_back(recursive_larger_elements_sequence[i]);
+        for (std::size_t j = 0; j < larger_and_smaller_element_pairs.size(); ++j) {
+            if (larger_and_smaller_element_pairs[j].first == recursive_larger_elements_sequence[i]) {
+                pending_elements_to_insert.push_back(larger_and_smaller_element_pairs[j].second);
                 break;
             }
         }
     }
 
-    // 4. Insert first pend element into mainChain at index 0 (0 comparisons)
-    mainChain.insert(mainChain.begin(), pend[0]);
-
-    // 5. Insert remaining pend elements in Jacobsthal order using binary search (lower_bound)
-    if (pend.size() > 1) {
-        std::vector<std::size_t> order = getJacobOrderVector(pend.size());
-        for (std::size_t i = 0; i < order.size(); ++i) {
-            std::size_t idx = order[i];
-            if (idx == 0)
-                continue;
-
-            int val = pend[idx];
-            int partner = 0;
-            for (std::size_t j = 0; j < pairs.size(); ++j) {
-                if (pairs[j].second == val) {
-                    partner = pairs[j].first;
-                    break;
-                }
-            }
-
-            std::vector<int>::iterator itPartner = std::find(mainChain.begin(), mainChain.end(), partner);
-            std::vector<int>::iterator pos = std::lower_bound(mainChain.begin(), itPartner, val);
-            mainChain.insert(pos, val);
+    if (!pending_elements_to_insert.empty()) {
+        sorted_main_chain.insert(sorted_main_chain.begin(), pending_elements_to_insert.front());
+        std::vector<std::size_t> insertion_indices = generate_jacobsthal_insertion_sequence_for_vector(pending_elements_to_insert.size());
+        for (std::size_t i = 0; i < insertion_indices.size(); ++i) {
+            std::size_t index = insertion_indices[i] - 1;
+            if (index == 0) continue;
+            std::vector<int>::iterator insertion_point = std::lower_bound(sorted_main_chain.begin(), sorted_main_chain.end(), pending_elements_to_insert[index]);
+            sorted_main_chain.insert(insertion_point, pending_elements_to_insert[index]);
         }
     }
-
-    // 6. Insert odd straggler if present
-    if (hasStraggler) {
-        std::vector<int>::iterator pos = std::lower_bound(mainChain.begin(), mainChain.end(), straggler);
-        mainChain.insert(pos, straggler);
-    }
-
-    arr = mainChain;
+    if (has_unpaired_odd_element) sorted_main_chain.insert(std::lower_bound(sorted_main_chain.begin(), sorted_main_chain.end(), unpaired_odd_element), unpaired_odd_element);
+    sequence_to_sort = sorted_main_chain;
 }
 
-void PmergeMe::sortDeque(std::deque<int>& arr) {
-    std::size_t n = arr.size();
-    if (n <= 1)
-        return;
-
-    bool hasStraggler = (n % 2 != 0);
-    int straggler = 0;
-    if (hasStraggler) {
-        straggler = arr.back();
-        arr.pop_back();
+std::deque<std::size_t> FordJohnsonMergeInsertSorter::generate_jacobsthal_insertion_sequence_for_deque(std::size_t pending_elements_count) {
+    std::deque<std::size_t> jacobsthal_sequence, insertion_sequence;
+    jacobsthal_sequence.push_back(0); jacobsthal_sequence.push_back(1);
+    for (std::size_t i = 2; jacobsthal_sequence.back() < pending_elements_count; ++i) jacobsthal_sequence.push_back(jacobsthal_sequence[i - 1] + 2 * jacobsthal_sequence[i - 2]);
+    for (std::size_t i = 2; i < jacobsthal_sequence.size(); ++i) {
+        std::size_t current_jacobsthal_number = std::min(jacobsthal_sequence[i], pending_elements_count);
+        for (std::size_t j = current_jacobsthal_number; j > jacobsthal_sequence[i - 1]; --j) insertion_sequence.push_back(j);
     }
+    return insertion_sequence;
+}
 
-    // 1. Group adjacent elements into pairs of (larger, smaller)
-    std::deque<std::pair<int, int> > pairs;
-    for (std::size_t i = 0; i < arr.size(); i += 2) {
-        if (arr[i] > arr[i + 1])
-            pairs.push_back(std::make_pair(arr[i], arr[i + 1]));
-        else
-            pairs.push_back(std::make_pair(arr[i + 1], arr[i]));
-    }
+void FordJohnsonMergeInsertSorter::execute_ford_johnson_sort_using_deque(std::deque<int>& sequence_to_sort) {
+    if (sequence_to_sort.size() < 2) return;
+    bool has_unpaired_odd_element = (sequence_to_sort.size() % 2 != 0);
+    int unpaired_odd_element = has_unpaired_odd_element ? sequence_to_sort.back() : 0;
+    if (has_unpaired_odd_element) sequence_to_sort.pop_back();
 
-    // 2. Extract larger elements to form mainChain and sort recursively
-    std::deque<int> mainChain;
-    for (std::size_t i = 0; i < pairs.size(); ++i)
-        mainChain.push_back(pairs[i].first);
+    std::deque<std::pair<int, int> > larger_and_smaller_element_pairs;
+    for (std::size_t i = 0; i < sequence_to_sort.size(); i += 2) larger_and_smaller_element_pairs.push_back(std::make_pair(std::max(sequence_to_sort[i], sequence_to_sort[i+1]), std::min(sequence_to_sort[i], sequence_to_sort[i+1])));
 
-    sortDeque(mainChain);
+    std::deque<int> recursive_larger_elements_sequence;
+    for (std::size_t i = 0; i < larger_and_smaller_element_pairs.size(); ++i) recursive_larger_elements_sequence.push_back(larger_and_smaller_element_pairs[i].first);
+    execute_ford_johnson_sort_using_deque(recursive_larger_elements_sequence);
 
-    // 3. Align pending elements with the sorted mainChain
-    std::deque<int> pend;
-    std::deque<bool> used(pairs.size(), false);
-    for (std::size_t i = 0; i < mainChain.size(); ++i) {
-        for (std::size_t j = 0; j < pairs.size(); ++j) {
-            if (!used[j] && pairs[j].first == mainChain[i]) {
-                pend.push_back(pairs[j].second);
-                used[j] = true;
+    std::deque<int> sorted_main_chain, pending_elements_to_insert;
+    for (std::size_t i = 0; i < recursive_larger_elements_sequence.size(); ++i) {
+        sorted_main_chain.push_back(recursive_larger_elements_sequence[i]);
+        for (std::size_t j = 0; j < larger_and_smaller_element_pairs.size(); ++j) {
+            if (larger_and_smaller_element_pairs[j].first == recursive_larger_elements_sequence[i]) {
+                pending_elements_to_insert.push_back(larger_and_smaller_element_pairs[j].second);
                 break;
             }
         }
     }
 
-    // 4. Insert first pend element into mainChain at index 0 (0 comparisons)
-    mainChain.push_front(pend[0]);
-
-    // 5. Insert remaining pend elements in Jacobsthal order using binary search (lower_bound)
-    if (pend.size() > 1) {
-        std::deque<std::size_t> order = getJacobOrderDeque(pend.size());
-        for (std::size_t i = 0; i < order.size(); ++i) {
-            std::size_t idx = order[i];
-            if (idx == 0)
-                continue;
-
-            int val = pend[idx];
-            int partner = 0;
-            for (std::size_t j = 0; j < pairs.size(); ++j) {
-                if (pairs[j].second == val) {
-                    partner = pairs[j].first;
-                    break;
-                }
-            }
-
-            std::deque<int>::iterator itPartner = std::find(mainChain.begin(), mainChain.end(), partner);
-            std::deque<int>::iterator pos = std::lower_bound(mainChain.begin(), itPartner, val);
-            mainChain.insert(pos, val);
+    if (!pending_elements_to_insert.empty()) {
+        sorted_main_chain.insert(sorted_main_chain.begin(), pending_elements_to_insert.front());
+        std::deque<std::size_t> insertion_indices = generate_jacobsthal_insertion_sequence_for_deque(pending_elements_to_insert.size());
+        for (std::size_t i = 0; i < insertion_indices.size(); ++i) {
+            std::size_t index = insertion_indices[i] - 1;
+            if (index == 0) continue;
+            std::deque<int>::iterator insertion_point = std::lower_bound(sorted_main_chain.begin(), sorted_main_chain.end(), pending_elements_to_insert[index]);
+            sorted_main_chain.insert(insertion_point, pending_elements_to_insert[index]);
         }
     }
-
-    // 6. Insert odd straggler if present
-    if (hasStraggler) {
-        std::deque<int>::iterator pos = std::lower_bound(mainChain.begin(), mainChain.end(), straggler);
-        mainChain.insert(pos, straggler);
-    }
-
-    arr = mainChain;
-}
-
-void PmergeMe::run(int argc, char** argv) {
-    std::vector<int> numbers;
-    numbers.reserve(argc - 1);
-
-    for (int i = 1; i < argc; ++i) {
-        std::string s = argv[i];
-        if (s.empty())
-            throw std::runtime_error("Error");
-
-        std::size_t start = 0;
-        if (s[0] == '+') {
-            start = 1;
-            if (s.length() == 1)
-                throw std::runtime_error("Error");
-        }
-
-        for (std::size_t j = start; j < s.length(); ++j) {
-            if (!std::isdigit(static_cast<unsigned char>(s[j])))
-                throw std::runtime_error("Error");
-        }
-
-        char* endptr = NULL;
-        errno = 0;
-        long val = std::strtol(s.c_str(), &endptr, 10);
-        if (errno == ERANGE || *endptr != '\0' || val < 0 || val > INT_MAX)
-            throw std::runtime_error("Error");
-
-        int num = static_cast<int>(val);
-        for (std::size_t k = 0; k < numbers.size(); ++k) {
-            if (numbers[k] == num)
-                throw std::runtime_error("Error");
-        }
-        numbers.push_back(num);
-    }
-
-    std::cout << "Before: ";
-    for (std::size_t i = 0; i < numbers.size(); ++i) {
-        if (i > 0)
-            std::cout << " ";
-        std::cout << numbers[i];
-    }
-    std::cout << std::endl;
-
-    std::vector<int> vecData = numbers;
-    std::deque<int> deqData(numbers.begin(), numbers.end());
-
-    struct timeval start, end;
-
-    gettimeofday(&start, NULL);
-    sortVector(vecData);
-    gettimeofday(&end, NULL);
-    double vecTime = (end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_usec - start.tv_usec);
-
-    gettimeofday(&start, NULL);
-    sortDeque(deqData);
-    gettimeofday(&end, NULL);
-    double deqTime = (end.tv_sec - start.tv_sec) * 1000000.0 + (end.tv_usec - start.tv_usec);
-
-    std::cout << "After:  ";
-    for (std::size_t i = 0; i < vecData.size(); ++i) {
-        if (i > 0)
-            std::cout << " ";
-        std::cout << vecData[i];
-    }
-    std::cout << std::endl;
-
-    std::cout << "Time to process a range of " << numbers.size()
-              << " elements with std::vector : " << std::fixed << std::setprecision(5)
-              << vecTime << " us" << std::endl;
-    std::cout << "Time to process a range of " << numbers.size()
-              << " elements with std::deque  : " << std::fixed << std::setprecision(5)
-              << deqTime << " us" << std::endl;
+    if (has_unpaired_odd_element) sorted_main_chain.insert(std::lower_bound(sorted_main_chain.begin(), sorted_main_chain.end(), unpaired_odd_element), unpaired_odd_element);
+    sequence_to_sort = sorted_main_chain;
 }

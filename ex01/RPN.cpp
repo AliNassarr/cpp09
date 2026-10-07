@@ -1,65 +1,40 @@
 #include "RPN.hpp"
+#include <stack>
 #include <sstream>
 #include <stdexcept>
 #include <cctype>
 
-RPN::RPN() {}
+ReversePolishNotationCalculator::ReversePolishNotationCalculator() {}
+ReversePolishNotationCalculator::ReversePolishNotationCalculator(const ReversePolishNotationCalculator& other_calculator_object) { (void)other_calculator_object; }
+ReversePolishNotationCalculator& ReversePolishNotationCalculator::operator=(const ReversePolishNotationCalculator& right_hand_side_object) { (void)right_hand_side_object; return *this; }
+ReversePolishNotationCalculator::~ReversePolishNotationCalculator() {}
 
-RPN::RPN(const RPN& other) {
-    (void)other;
+bool ReversePolishNotationCalculator::is_valid_mathematical_operator(char character_to_check) {
+    return (character_to_check == '+' || character_to_check == '-' || character_to_check == '*' || character_to_check == '/');
 }
 
-RPN& RPN::operator=(const RPN& rhs) {
-    (void)rhs;
-    return *this;
+int ReversePolishNotationCalculator::perform_arithmetic_operation(int left_operand, int right_operand, char mathematical_operator) {
+    if (mathematical_operator == '/' && right_operand == 0) throw std::runtime_error("Error");
+    return mathematical_operator == '+' ? left_operand + right_operand :
+           mathematical_operator == '-' ? left_operand - right_operand :
+           mathematical_operator == '*' ? left_operand * right_operand : left_operand / right_operand;
 }
 
-RPN::~RPN() {}
+int ReversePolishNotationCalculator::evaluate_mathematical_expression(const std::string& mathematical_expression_string) {
+    std::stack<int> number_storage_stack;
+    std::istringstream expression_token_stream(mathematical_expression_string);
+    std::string current_string_token;
 
-bool RPN::isOperator(char c) {
-    return (c == '+' || c == '-' || c == '*' || c == '/');
-}
-
-int RPN::applyOperation(int a, int b, char op) {
-    if (op == '+')
-        return a + b;
-    if (op == '-')
-        return a - b;
-    if (op == '*')
-        return a * b;
-    if (op == '/') {
-        if (b == 0)
-            throw std::runtime_error("Error");
-        return a / b;
+    while (expression_token_stream >> current_string_token) {
+        if (current_string_token.length() == 1 && std::isdigit(static_cast<unsigned char>(current_string_token[0]))) {
+            number_storage_stack.push(current_string_token[0] - '0');
+        } else if (current_string_token.length() == 1 && is_valid_mathematical_operator(current_string_token[0])) {
+            if (number_storage_stack.size() < 2) throw std::runtime_error("Error");
+            int right_operand = number_storage_stack.top(); number_storage_stack.pop();
+            int left_operand = number_storage_stack.top(); number_storage_stack.pop();
+            number_storage_stack.push(perform_arithmetic_operation(left_operand, right_operand, current_string_token[0]));
+        } else throw std::runtime_error("Error");
     }
-    throw std::runtime_error("Error");
-}
-
-int RPN::calculate(const std::string& expression) {
-    std::stack<int> s;
-    std::istringstream iss(expression);
-    std::string token;
-
-    while (iss >> token) {
-        if (token.length() == 1 && std::isdigit(static_cast<unsigned char>(token[0]))) {
-            s.push(token[0] - '0');
-        } else if (token.length() == 1 && isOperator(token[0])) {
-            if (s.size() < 2)
-                throw std::runtime_error("Error");
-
-            int b = s.top();
-            s.pop();
-            int a = s.top();
-            s.pop();
-
-            s.push(applyOperation(a, b, token[0]));
-        } else {
-            throw std::runtime_error("Error");
-        }
-    }
-
-    if (s.size() != 1)
-        throw std::runtime_error("Error");
-
-    return s.top();
+    if (number_storage_stack.size() != 1) throw std::runtime_error("Error");
+    return number_storage_stack.top();
 }
