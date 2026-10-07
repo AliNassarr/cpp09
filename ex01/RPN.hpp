@@ -3,18 +3,18 @@
 
 #include <string>
 
-class ReversePolishNotationCalculator {
+class RPN {
 public:
-    ReversePolishNotationCalculator();
-    ReversePolishNotationCalculator(const ReversePolishNotationCalculator& other_calculator_object);
-    ReversePolishNotationCalculator& operator=(const ReversePolishNotationCalculator& right_hand_side_object);
-    ~ReversePolishNotationCalculator();
+    RPN();
+    RPN(const RPN& other);
+    RPN& operator=(const RPN& rhs);
+    ~RPN();
 
-    static int evaluate_mathematical_expression(const std::string& mathematical_expression_string);
+    static int calculate(const std::string& expression);
 
 private:
-    static bool is_valid_mathematical_operator(char character_to_check);
-    static int perform_arithmetic_operation(int left_operand, int right_operand, char mathematical_operator);
+    static bool isOperator(char c);
+    static int applyOperation(int a, int b, char op);
 };
 
 #endif
