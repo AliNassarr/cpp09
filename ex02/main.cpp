@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // 1. Validate input upfront (digits only, positive int, no duplicates)
+    // 1. Validate inputs upfront
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (!isValidNumber(arg)) {
@@ -49,23 +49,27 @@ int main(int argc, char** argv) {
     }
     std::cout << "\n";
 
-    // 3. std::vector: Measure data management (filling container) + sorting
+    // 3. std::vector: measure data management + sort
     std::vector<int> vec;
+    PmergeMe::comparisons = 0;
     double startVec = getUs();
     for (int i = 1; i < argc; ++i) {
         vec.push_back(std::strtol(argv[i], NULL, 10));
     }
     PmergeMe::sortVector(vec);
     double timeVec = getUs() - startVec;
+    size_t compVec = PmergeMe::comparisons;
 
-    // 4. std::deque: Measure data management (filling container) + sorting
+    // 4. std::deque: measure data management + sort
     std::deque<int> deq;
+    PmergeMe::comparisons = 0;
     double startDeq = getUs();
     for (int i = 1; i < argc; ++i) {
         deq.push_back(std::strtol(argv[i], NULL, 10));
     }
     PmergeMe::sortDeque(deq);
     double timeDeq = getUs() - startDeq;
+    size_t compDeq = PmergeMe::comparisons;
 
     // 5. Display sequence after sorting
     std::cout << "After:  ";
@@ -74,10 +78,12 @@ int main(int argc, char** argv) {
     }
     std::cout << "\n";
 
-    // 6. Display timings
+    // 6. Display timings and comparisons
     std::cout << std::fixed << std::setprecision(5);
     std::cout << "Time to process a range of " << vec.size() << " elements with std::vector : " << timeVec << " us\n";
     std::cout << "Time to process a range of " << deq.size() << " elements with std::deque  : " << timeDeq << " us\n";
+    std::cout << "Comparisons (std::vector): " << compVec << "\n";
+    std::cout << "Comparisons (std::deque):  " << compDeq << "\n";
 
     return 0;
 }

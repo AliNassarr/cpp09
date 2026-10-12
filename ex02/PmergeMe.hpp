@@ -12,12 +12,11 @@ public:
     PmergeMe& operator=(const PmergeMe& rhs);
     ~PmergeMe();
 
+    static size_t comparisons;
+    static bool compare(int a, int b);
+
     static void sortVector(std::vector<int>& arr);
     static void sortDeque(std::deque<int>& arr);
-
-private:
-    static std::vector<size_t> getJacobOrderVector(size_t len);
-    static std::deque<size_t> getJacobOrderDeque(size_t len);
 };
 
 #endif
