@@ -10,53 +10,71 @@ double getUs() {
     return t.tv_sec * 1000000.0 + t.tv_usec;
 }
 
-void printVec(const std::string& msg, const std::vector<int>& v) {
-    std::cout << msg;
-    for (size_t i = 0; i < v.size(); ++i) std::cout << v[i] << " ";
-    std::cout << "\n";
+bool isValidNumber(const std::string& str) {
+    size_t start = (str[0] == '+') ? 1 : 0;
+    if (str.length() == start) return false;
+    return str.find_first_not_of("0123456789", start) == std::string::npos;
 }
 
 int main(int argc, char** argv) {
-    if (argc < 2) { std::cerr << "Error\n"; return 1; }
-
-    std::vector<int> vec;
-    std::deque<int> deq;
-
-    // Compact but readable parsing and validation
-    for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
-        size_t start = (arg[0] == '+') ? 1 : 0;
-        
-        if (arg.length() == start || arg.find_first_not_of("0123456789", start) != std::string::npos) {
-            std::cerr << "Error\n"; return 1;
-        }
-        
-        long val = std::strtol(arg.c_str(), NULL, 10);
-        if (val > 2147483647) { std::cerr << "Error\n"; return 1; }
-
-        for (size_t j = 0; j < vec.size(); ++j) {
-            if (vec[j] == val) { std::cerr << "Error\n"; return 1; }
-        }
-
-        vec.push_back(val);
-        deq.push_back(val);
+    if (argc < 2) {
+        std::cerr << "Error\n";
+        return 1;
     }
 
-    printVec("Before: ", vec);
+    // 1. Validate input upfront (digits only, positive int, no duplicates)
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (!isValidNumber(arg)) {
+            std::cerr << "Error\n";
+            return 1;
+        }
+        long val = std::strtol(arg.c_str(), NULL, 10);
+        if (val > 2147483647) {
+            std::cerr << "Error\n";
+            return 1;
+        }
+        for (int j = 1; j < i; ++j) {
+            if (std::strtol(argv[j], NULL, 10) == val) {
+                std::cerr << "Error\n";
+                return 1;
+            }
+        }
+    }
 
-    // Timing Vector
-    double start = getUs();
+    // 2. Display sequence before sorting
+    std::cout << "Before: ";
+    for (int i = 1; i < argc; ++i) {
+        std::cout << std::strtol(argv[i], NULL, 10) << " ";
+    }
+    std::cout << "\n";
+
+    // 3. std::vector: Measure data management (filling container) + sorting
+    std::vector<int> vec;
+    double startVec = getUs();
+    for (int i = 1; i < argc; ++i) {
+        vec.push_back(std::strtol(argv[i], NULL, 10));
+    }
     PmergeMe::sortVector(vec);
-    double timeVec = getUs() - start;
+    double timeVec = getUs() - startVec;
 
-    // Timing Deque
-    start = getUs();
+    // 4. std::deque: Measure data management (filling container) + sorting
+    std::deque<int> deq;
+    double startDeq = getUs();
+    for (int i = 1; i < argc; ++i) {
+        deq.push_back(std::strtol(argv[i], NULL, 10));
+    }
     PmergeMe::sortDeque(deq);
-    double timeDeq = getUs() - start;
+    double timeDeq = getUs() - startDeq;
 
-    printVec("After:  ", vec);
+    // 5. Display sequence after sorting
+    std::cout << "After:  ";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        std::cout << vec[i] << " ";
+    }
+    std::cout << "\n";
 
-    // Final Output
+    // 6. Display timings
     std::cout << std::fixed << std::setprecision(5);
     std::cout << "Time to process a range of " << vec.size() << " elements with std::vector : " << timeVec << " us\n";
     std::cout << "Time to process a range of " << deq.size() << " elements with std::deque  : " << timeDeq << " us\n";
