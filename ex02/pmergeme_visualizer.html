@@ -23,6 +23,7 @@
       --bound: #c084fc;
       --bound-bg: rgba(192, 132, 252, 0.12);
       --accent: #38bdf8;
+      --recursion-badge: #ec4899;
     }
 
     * {
@@ -107,7 +108,7 @@
       font-size: 0.9rem;
       font-weight: 600;
       letter-spacing: 0.05em;
-      width: 220px;
+      width: 240px;
     }
 
     .input-section input:focus {
@@ -153,6 +154,7 @@
     .presets {
       display: flex;
       gap: 0.4rem;
+      flex-wrap: wrap;
     }
 
     .playback-controls {
@@ -217,17 +219,23 @@
       border: 1px solid var(--winner);
     }
 
+    .status-recursion {
+      background: rgba(236, 72, 153, 0.2);
+      color: var(--recursion-badge);
+      border: 1px solid var(--recursion-badge);
+    }
+
     /* CANVAS VISUALIZATION */
     .canvas-container {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 12px;
       padding: 2rem;
-      min-height: 380px;
+      min-height: 420px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 2.5rem;
+      gap: 2.2rem;
       position: relative;
       overflow-x: auto;
     }
@@ -242,7 +250,7 @@
     }
 
     .row-header {
-      width: 140px;
+      width: 160px;
       font-size: 0.85rem;
       font-weight: 700;
       text-transform: uppercase;
@@ -322,9 +330,9 @@
     }
 
     .card-active {
-      transform: scale(1.15);
+      transform: scale(1.18);
       border-color: var(--highlight) !important;
-      box-shadow: 0 0 15px rgba(250, 204, 21, 0.5) !important;
+      box-shadow: 0 0 16px rgba(250, 204, 21, 0.6) !important;
     }
 
     .card-in-bound {
@@ -332,30 +340,40 @@
       border-color: var(--bound) !important;
     }
 
-    /* SEARCH BOUND HIGHLIGHT OVERLAY */
-    .search-bound-box {
-      position: absolute;
-      border: 2px dashed var(--bound);
-      background: rgba(192, 132, 252, 0.08);
-      border-radius: 12px;
-      pointer-events: none;
-      transition: all 0.3s ease;
+    /* RECURSION CALLOUT / PAIRS TABLE */
+    .pairs-tracker {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
       display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding-top: 4px;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.82rem;
     }
 
-    .search-bound-tag {
-      background: var(--bound);
-      color: #0f172a;
-      font-size: 0.68rem;
-      font-weight: 800;
-      padding: 0.15rem 0.5rem;
-      border-radius: 999px;
-      letter-spacing: 0.04em;
-      position: absolute;
-      top: -12px;
+    .pairs-tracker-title {
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+    }
+
+    .pair-badge {
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      padding: 0.25rem 0.55rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .pair-badge.matched {
+      border-color: var(--winner);
+      background: rgba(34, 197, 94, 0.12);
     }
 
     /* EXPLANATION BANNER */
@@ -372,7 +390,7 @@
 
     .defense-text {
       font-size: 0.95rem;
-      line-height: 1.5;
+      line-height: 1.55;
       color: var(--text);
     }
 
@@ -439,7 +457,7 @@
         Ford-Johnson Merge-Insertion Sort
         <span class="badge-42">42 CPP09 EX02</span>
       </h1>
-      <p class="subtitle">Interactive Step-by-Step Defense Visualizer with Live Knuth Comparison Bound Tracking</p>
+      <p class="subtitle">Interactive Step-by-Step Defense Visualizer &bull; Full Recursive Trace Inspector</p>
     </div>
     <div style="font-size: 0.8rem; color: var(--text-muted); text-align: right;">
       <span>Strict 100% Passing Criteria</span><br>
@@ -451,11 +469,12 @@
   <div class="toolbar">
     <div class="input-section">
       <label for="array-input" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">ARRAY:</label>
-      <input type="text" id="array-input" value="9 2 12 5 7" placeholder="e.g. 9 2 12 5 7">
+      <input type="text" id="array-input" value="8 1 4 3 9 2 7" placeholder="e.g. 8 1 4 3 9 2 7">
       <button class="btn btn-primary" id="btn-load">Load & Run</button>
     </div>
 
     <div class="presets">
+      <button class="btn" onclick="loadPreset([8, 1, 4, 3, 9, 2, 7])">⭐ [8,1,4,3,9,2,7] (Recursion Demo)</button>
       <button class="btn" onclick="loadPreset([9, 2, 12, 5, 7])">5 Elements</button>
       <button class="btn" onclick="loadPreset([9, 8, 7, 6, 5, 4, 3, 2, 1, 0])">10 Reversed</button>
       <button class="btn" onclick="loadRandom(21)">21 Elements (Max 66)</button>
@@ -471,8 +490,8 @@
       <div class="speed-wrapper">
         <span>Speed:</span>
         <select id="speed-select" style="background:#0f172a; color:#fff; border:1px solid #334155; border-radius:6px; padding:0.2rem 0.4rem; font-size:0.8rem;">
-          <option value="1600">0.5x</option>
-          <option value="900" selected>1.0x</option>
+          <option value="1800">0.5x</option>
+          <option value="1000" selected>1.0x</option>
           <option value="500">2.0x</option>
         </select>
       </div>
@@ -483,28 +502,35 @@
   <div class="hud-grid">
     <div class="metric-card">
       <span class="metric-title">Elements (N)</span>
-      <div class="metric-value" id="hud-n">5</div>
+      <div class="metric-value" id="hud-n">7</div>
     </div>
     <div class="metric-card">
       <span class="metric-title">Current Phase</span>
-      <div class="metric-value" style="font-size: 1.05rem;" id="hud-phase">1. Pairing</div>
+      <div class="metric-value" style="font-size: 1.0rem;" id="hud-phase">1. Pairing</div>
     </div>
     <div class="metric-card">
       <span class="metric-title">Comparisons / Knuth Bound F(N)</span>
       <div class="metric-value">
-        <span id="hud-comparisons">0</span> / <span id="hud-bound">7</span>
+        <span id="hud-comparisons">0</span> / <span id="hud-bound">13</span>
         <span class="status-badge status-optimal" id="hud-optimal-tag">OPTIMAL</span>
       </div>
     </div>
     <div class="metric-card">
-      <span class="metric-title">Current Jacobsthal Batch</span>
-      <div class="metric-value" style="font-size: 1.05rem;" id="hud-jacob">-</div>
+      <span class="metric-title">Call Stack / Jacobsthal</span>
+      <div class="metric-value" style="font-size: 1.0rem;" id="hud-jacob">-</div>
     </div>
   </div>
 
   <!-- VISUAL CANVAS -->
   <div class="canvas-container" id="canvas-container">
-    <!-- Top Row: mainChain -->
+
+    <!-- Active Pairs Mapping Tracker -->
+    <div class="pairs-tracker" id="pairs-tracker" style="display: none;">
+      <span class="pairs-tracker-title">Original Pairs Lookup:</span>
+      <div id="pairs-tracker-badges" style="display: flex; gap: 0.6rem; flex-wrap: wrap;"></div>
+    </div>
+
+    <!-- Top Row: mainChain / Winners -->
     <div class="stage-row" id="row-mainchain">
       <div class="row-header">
         <span id="row-top-title">mainChain</span>
@@ -526,7 +552,7 @@
   <!-- DEFENSE EXPLANATION CARD -->
   <div class="defense-card">
     <div class="defense-text" id="explanation-text">
-      Welcome to the <strong>Ford-Johnson (PmergeMe) Interactive Visualizer</strong>. Click <strong>Next ▶</strong> or <strong>Play</strong> to step through the algorithm.
+      Welcome to the <strong>Ford-Johnson (PmergeMe) Interactive Visualizer</strong>. Click <strong>Next ▶</strong> to explore how recursion sorts the winners!
     </div>
     <span class="badge-42" id="step-indicator" style="flex-shrink: 0;">Step 0 / 0</span>
   </div>
@@ -536,20 +562,20 @@
     <summary>📖 42 Evaluator Defense Q&A Cheat Sheet (Click to Expand)</summary>
     <div class="qa-grid">
       <div class="qa-item">
-        <div class="qa-q">Q1: Why did you use Jacobsthal numbers instead of powers of 2?</div>
-        <div class="qa-a">Jacobsthal numbers [1, 3, 5, 11, 21...] optimize binary search efficiency. By inserting element <i>b_k</i> when the main chain length is strictly bounded to 2<sup>p</sup> - 1, every binary search hits the theoretical minimum depth without wasting a comparison.</div>
+        <div class="qa-q">Q1: How does recursion work and how do losers stay aligned?</div>
+        <div class="qa-a">During Step 1, all <code>(winner, loser)</code> pairs are saved in a table. Then <code>sortVector(winners)</code> sorts the winners array in place recursively down to size 1. When it returns, we iterate over the sorted winners and lookup each winner's original partner in our pairs table, populating <code>losers[i]</code>. Thus, <code>losers[i]</code> is always guaranteed to be the exact partner of <code>winners[i]</code>!</div>
       </div>
       <div class="qa-item">
         <div class="qa-q">Q2: Why does the first loser (b₁) take 0 comparisons?</div>
         <div class="qa-a">Because <i>b₁ &lt; a₁</i> by construction, and <i>a₁</i> is the smallest element of all sorted winners. Therefore, <i>b₁</i> is guaranteed to be smaller than the entire chain and is inserted at index 0 for free.</div>
       </div>
       <div class="qa-item">
-        <div class="qa-q">Q3: Why is std::vector faster than std::deque in wall-clock time?</div>
-        <div class="qa-a"><code>std::vector</code> uses a single contiguous block of memory, yielding superior CPU cache locality during binary search. <code>std::deque</code> allocates multiple non-contiguous page chunks linked by a map pointer, causing more cache misses.</div>
+        <div class="qa-q">Q3: Why did you use Jacobsthal numbers instead of powers of 2?</div>
+        <div class="qa-a">Jacobsthal numbers [1, 3, 5, 11, 21...] optimize binary search efficiency. By inserting element <i>b_k</i> when the main chain length is strictly bounded to 2<sup>p</sup> - 1, every binary search hits the theoretical minimum depth without wasting a comparison.</div>
       </div>
       <div class="qa-item">
-        <div class="qa-q">Q4: Why bound the binary search to each loser's paired winner?</div>
-        <div class="qa-a">Every loser <i>b_i</i> was already compared against its winner <i>a_i</i> during Step 1 (<i>b_i &lt; a_i</i>). Thus, <i>b_i</i> can never appear after <i>a_i</i> in the sorted array, cutting the binary search space in half.</div>
+        <div class="qa-q">Q4: Why is std::vector faster than std::deque in wall-clock time?</div>
+        <div class="qa-a"><code>std::vector</code> uses a single contiguous block of memory, yielding superior CPU cache locality during binary search. <code>std::deque</code> allocates multiple non-contiguous page chunks linked by a map pointer, causing more cache misses.</div>
       </div>
     </div>
   </details>
@@ -566,11 +592,11 @@
       return sum;
     }
 
-    // Step Snapshot Engine
     let states = [];
     let currentIndex = 0;
     let timer = null;
 
+    // Full Step Snapshot Engine with Explicit Recursive Breakdown
     function buildSnapshots(initialArray) {
       const recorded = [];
       let compCount = 0;
@@ -581,8 +607,7 @@
         return a < b;
       }
 
-      // Snapshot helper
-      function snap(phase, title, explanation, mainChain, losers, boundRange = null, activeCard = null, batchName = "-") {
+      function snap(phase, title, explanation, mainChain, losers, boundRange = null, activeCard = null, batchName = "-", pairsTable = null) {
         recorded.push({
           phase,
           title,
@@ -592,6 +617,7 @@
           boundRange,
           activeCard,
           batchName,
+          pairsTable: pairsTable ? JSON.parse(JSON.stringify(pairsTable)) : null,
           comparisons: compCount,
           boundF
         });
@@ -606,11 +632,11 @@
         return recorded;
       }
 
-      // Phase 1: Pairing
+      // Step 1: Pairing & Straggler
       const hasOdd = (initialArray.length % 2 !== 0);
       const stragglerVal = hasOdd ? initialArray[initialArray.length - 1] : null;
       const pairs = [];
-      const winners = [];
+      const rawWinners = [];
 
       for (let i = 0; i + 1 < initialArray.length; i += 2) {
         let w = initialArray[i];
@@ -619,45 +645,78 @@
           const tmp = w; w = l; l = tmp;
         }
         pairs.push({ winner: w, loser: l });
-        winners.push(w);
+        rawWinners.push(w);
       }
 
-      const pairedWinners = pairs.map(p => ({ val: p.winner, role: 'winner' }));
-      const pairedLosers = pairs.map(p => ({ val: p.loser, role: 'loser', pairedWith: p.winner }));
+      const pairsDisplay = pairs.map(p => `(${p.winner} > ${p.loser})`);
+      const pairedWinnersCards = pairs.map(p => ({ val: p.winner, role: 'winner' }));
+      const pairedLosersCards = pairs.map(p => ({ val: p.loser, role: 'loser', pairedWith: p.winner }));
       if (hasOdd) {
-        pairedLosers.push({ val: stragglerVal, role: 'straggler', pairedWith: null });
+        pairedLosersCards.push({ val: stragglerVal, role: 'straggler', pairedWith: null });
       }
 
-      snap("Phase 1: Pairing", "Pairs Formed",
-        `Paired adjacent elements: performed ${pairs.length} comparison(s). Larger numbers are <strong>Winners (Green)</strong>, smaller are <strong>Losers (Red)</strong>${hasOdd ? ', and odd element is <strong>Straggler (Orange)</strong>' : ''}.`,
-        pairedWinners, pairedLosers);
+      snap("Step 1: Pairing", "Pairs Formed",
+        `Paired adjacent elements into (winner, loser): ${pairsDisplay.join(', ')}${hasOdd ? `, plus Straggler: ${stragglerVal}` : ''}. Performed ${pairs.length} comparison(s). Saved pairs in <code>pairs</code> table!`,
+        pairedWinnersCards, pairedLosersCards, null, null, "Level 0", pairs);
 
-      // Phase 2: Recursively sort winners (simulated locally for visualization)
-      const sortedWinners = [...winners].sort((a, b) => a - b);
+      // =====================================================================
+      // STEP 2: THE RECURSIVE SORT BREAKDOWN (What user asked for!)
+      // =====================================================================
+
+      // Sub-step 2A: Showing the unsorted winners
+      snap("Step 2: Recursive Sort", "Extract Unsorted Winners",
+        `We extract the winners into an array: <code>winners = [${rawWinners.join(', ')}]</code>. <br><strong>Notice:</strong> The winners are currently UNSORTED. We now call <code>sortVector(winners)</code> recursively!`,
+        pairedWinnersCards, pairedLosersCards, null, null, "Call Stack: Level 1", pairs);
+
+      // Sub-step 2B: Inside the recursive call
+      const sortedWinners = [...rawWinners].sort((a, b) => a - b);
+      
+      snap("Step 2: Recursive Sort", "Inside sortVector(winners)",
+        `⚙️ <strong>Inside recursive call sortVector([${rawWinners.join(', ')}]):</strong><br>
+        The function repeats pairing and binary insertion on these winners until reaching the base case (size 1).<br>
+        When the call unwinds, the winners array returns fully sorted: <strong>[${sortedWinners.join(', ')}]</strong>.`,
+        sortedWinners.map(w => ({ val: w, role: 'winner' })), pairedLosersCards, null, null, "Level 1 -> Returned", pairs);
+
+      // Sub-step 2C: Re-aligning the Losers
       const alignedLosers = [];
+      const alignmentStepsText = [];
+
       for (let i = 0; i < sortedWinners.length; i++) {
-        const found = pairs.find(p => p.winner === sortedWinners[i]);
-        alignedLosers.push({ val: found.loser, role: 'loser', pairedWith: sortedWinners[i] });
+        const sw = sortedWinners[i];
+        const found = pairs.find(p => p.winner === sw);
+        alignedLosers.push({ val: found.loser, role: 'loser', pairedWith: sw });
+        alignmentStepsText.push(`Winner <strong>${sw}</strong> was paired with Loser <strong>${found.loser}</strong>`);
       }
       if (hasOdd) {
         alignedLosers.push({ val: stragglerVal, role: 'straggler', pairedWith: null });
       }
 
-      const mainChain = sortedWinners.map(w => ({ val: w, role: 'mainchain' }));
-      snap("Phase 2: Sort Winners", "mainChain Initialized",
-        `Winners recursively sorted into <strong>mainChain</strong>: [${sortedWinners.join(', ')}]. Each loser remains aligned below its paired winner.`,
-        mainChain, alignedLosers);
+      snap("Step 2: Re-align Losers", "Re-aligning Losers",
+        `🔄 <strong>Re-aligning losers using pairs table:</strong><br>` +
+        alignmentStepsText.join(' &bull; ') + `<br>
+        Now <code>losers[i]</code> is guaranteed to be the exact partner of <code>winners[i]</code>!`,
+        sortedWinners.map(w => ({ val: w, role: 'winner' })), alignedLosers, null, null, "Pairs Aligned", pairs);
 
-      // Phase 3: Free insertion of first loser
+      // Sub-step 2D: mainChain initialized
+      const mainChain = sortedWinners.map(w => ({ val: w, role: 'mainchain' }));
+      snap("Step 2: mainChain Initialized", "mainChain = winners",
+        `<code>mainChain</code> is initialized with sorted winners: <strong>[${sortedWinners.join(', ')}]</strong>.<br>Each loser sits directly aligned beneath its paired winner.`,
+        mainChain, alignedLosers, null, null, "-", pairs);
+
+      // =====================================================================
+      // STEP 3: FREE INSERTION OF FIRST LOSER
+      // =====================================================================
       const firstLoser = alignedLosers[0];
       mainChain.unshift({ val: firstLoser.val, role: 'mainchain' });
       alignedLosers[0].inserted = true;
 
-      snap("Phase 3: Free Insertion", "Free Insert b₁",
-        `First loser <strong>${firstLoser.val}</strong> is paired with <strong>${firstLoser.pairedWith}</strong> (the smallest winner). It is guaranteed smaller than the entire chain! <strong>0 comparisons used.</strong>`,
-        mainChain, alignedLosers, null, firstLoser.val);
+      snap("Step 3: Free Insertion", "Free Insert b₁",
+        `First loser <strong>${firstLoser.val}</strong> is paired with <strong>${firstLoser.pairedWith}</strong> (the smallest winner). <br>Since ${firstLoser.val} &lt; ${firstLoser.pairedWith}, it is guaranteed smaller than ALL elements in mainChain! <strong>0 comparisons used.</strong>`,
+        mainChain, alignedLosers, null, firstLoser.val, "-", pairs);
 
-      // Phase 4: Jacobsthal Batches
+      // =====================================================================
+      // STEP 4: JACOBSTHAL BATCHES & BOUNDED BINARY INSERTION
+      // =====================================================================
       let jPrev = 1;
       let jCurr = 3;
 
@@ -667,7 +726,7 @@
         for (let k = maxK; k > jPrev; --k) {
           batchIndices.push(k - 1);
         }
-        const batchNameStr = `[${batchIndices.map(i => alignedLosers[i].val).join(', ')}]`;
+        const batchNameStr = `Jacob Batch: [${batchIndices.map(i => alignedLosers[i].val).join(', ')}]`;
 
         for (let i = 0; i < batchIndices.length; i++) {
           const idx = batchIndices[i];
@@ -680,9 +739,9 @@
             boundIdx = mainChain.findIndex(c => c.val === loserItem.pairedWith);
           }
 
-          snap("Phase 4: Jacobsthal", `Insert Loser ${loserVal}`,
-            `Inserting <strong>${loserVal}</strong> in Jacobsthal order. Bound: ${loserItem.pairedWith !== null ? `stopped before paired winner <strong>${loserItem.pairedWith}</strong> (index ${boundIdx})` : 'full chain (straggler)'}.`,
-            mainChain, alignedLosers, { start: 0, end: boundIdx, boundVal: loserItem.pairedWith }, loserVal, batchNameStr);
+          snap("Step 4: Jacobsthal", `Insert Loser ${loserVal}`,
+            `Inserting <strong>${loserVal}</strong> in Jacobsthal order. <br>Bound: ${loserItem.pairedWith !== null ? `stopped before paired winner <strong>${loserItem.pairedWith}</strong> (index ${boundIdx})` : 'full chain (straggler)'}.`,
+            mainChain, alignedLosers, { start: 0, end: boundIdx, boundVal: loserItem.pairedWith }, loserVal, batchNameStr, pairs);
 
           // Binary search simulation
           let low = 0;
@@ -699,9 +758,9 @@
           mainChain.splice(low, 0, { val: loserVal, role: 'mainchain' });
           loserItem.inserted = true;
 
-          snap("Phase 4: Jacobsthal", `Inserted ${loserVal}`,
+          snap("Step 4: Jacobsthal", `Inserted ${loserVal}`,
             `Binary search completed! Inserted <strong>${loserVal}</strong> at position ${low}. Current mainChain: [${mainChain.map(c => c.val).join(', ')}].`,
-            mainChain, alignedLosers, null, loserVal, batchNameStr);
+            mainChain, alignedLosers, null, loserVal, batchNameStr, pairs);
         }
 
         const nextJ = jCurr + 2 * jPrev;
@@ -712,13 +771,13 @@
       // Phase Complete
       const finalChain = mainChain.map(c => ({ val: c.val, role: 'winner' }));
       snap("Sort Complete", "Fully Sorted",
-        `🎉 <strong>Ford-Johnson Complete!</strong> Final sorted array: [${finalChain.map(c => c.val).join(', ')}]. Total comparisons: <strong>${compCount}</strong> (Strictly &le; Knuth bound of ${boundF}).`,
-        finalChain, [], null, null, "Complete");
+        `🎉 <strong>Ford-Johnson Complete!</strong> Final sorted array: [${finalChain.map(c => c.val).join(', ')}].<br>Total comparisons: <strong>${compCount}</strong> (Strictly &le; Knuth theoretical maximum of ${boundF}).`,
+        finalChain, [], null, null, "Complete", pairs);
 
       return recorded;
     }
 
-    // Render a given snapshot
+    // Render snapshot
     function renderState(state) {
       document.getElementById('hud-phase').textContent = state.title;
       document.getElementById('hud-comparisons').textContent = state.comparisons;
@@ -726,6 +785,18 @@
       document.getElementById('hud-jacob').textContent = state.batchName;
       document.getElementById('explanation-text').innerHTML = state.explanation;
       document.getElementById('step-indicator').textContent = `Step ${currentIndex + 1} / ${states.length}`;
+
+      // Pairs Tracker Bar
+      const pairsTracker = document.getElementById('pairs-tracker');
+      const badgesContainer = document.getElementById('pairs-tracker-badges');
+      if (state.pairsTable && state.pairsTable.length > 0) {
+        pairsTracker.style.display = 'flex';
+        badgesContainer.innerHTML = state.pairsTable.map(p =>
+          `<span class="pair-badge">Winner <b>${p.winner}</b> &harr; Loser <b>${p.loser}</b></span>`
+        ).join('');
+      } else {
+        pairsTracker.style.display = 'none';
+      }
 
       const topItems = document.getElementById('items-mainchain');
       const botItems = document.getElementById('items-losers');
@@ -829,7 +900,7 @@
     document.getElementById('btn-last').onclick = () => goTo(states.length - 1);
     document.getElementById('btn-play').onclick = togglePlay;
 
-    // Keyboard navigation (Left/Right arrows, Space for play)
+    // Keyboard navigation
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT') return;
       if (e.key === 'ArrowRight') goTo(currentIndex + 1);
