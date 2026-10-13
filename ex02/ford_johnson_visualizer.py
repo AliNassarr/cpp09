@@ -7,12 +7,13 @@ Usage:
     manim -pql ford_johnson_visualizer.py FordJohnsonVisualizer    # Low quality (fast preview)
     manim -pqh ford_johnson_visualizer.py FordJohnsonVisualizer    # High quality (1080p 60fps)
 
-Prerequisites:
-    pip install manim
+Zero LaTeX Dependency:
+    Uses pure Pango/Cairo Text objects so it runs on any system without
+    requiring TexLive or MikTeX.
 
 C++ INTEGRATION HOOK:
     Search for "C++ LOG / JSON HOOK" below to see how to replace the hardcoded
-    array with dynamic trace logs emitted by your C++ PmergeMe program.
+    array with dynamic trace logs exported from your C++ program.
 =============================================================================
 """
 
@@ -35,7 +36,7 @@ COLOR_TEXT_MUTED  = "#94a3b8"  # Muted slate text
 class NumberNode(VGroup):
     """
     Visual card/node representing an integer element with smooth color shifts.
-    Uses pure Text Mobjects for maximum portability without LaTeX dependencies.
+    Uses pure Text Mobjects for 100% portability without LaTeX dependencies.
     """
     def __init__(self, value, color=COLOR_DEFAULT, width=1.0, height=1.0, **kwargs):
         super().__init__(**kwargs)
@@ -139,12 +140,12 @@ class FordJohnsonVisualizer(Scene):
             run_time=1.2
         )
 
-        # Labels for pairs
+        # Labels for pairs (pure Text, zero LaTeX dependency)
         brace_p1 = Brace(pair1, DOWN, color=COLOR_TEXT_MUTED, buff=0.15)
-        label_p1 = brace_p1.get_text("Pair 1").scale(0.65)
+        label_p1 = Text("Pair 1", font_size=15, color=COLOR_TEXT_MUTED).next_to(brace_p1, DOWN, buff=0.12)
 
         brace_p2 = Brace(pair2, DOWN, color=COLOR_TEXT_MUTED, buff=0.15)
-        label_p2 = brace_p2.get_text("Pair 2").scale(0.65)
+        label_p2 = Text("Pair 2", font_size=15, color=COLOR_TEXT_MUTED).next_to(brace_p2, DOWN, buff=0.12)
 
         tag_straggler = Text("Straggler", font_size=16, color=COLOR_STRAGGLER, weight=BOLD)
         tag_straggler.next_to(straggler, DOWN, buff=0.3)
@@ -405,18 +406,3 @@ class FordJohnsonVisualizer(Scene):
         group = VGroup(pill, label)
         label.move_to(pill.get_center())
         return group
-
-
-# ===========================================================================
-# C++ / JSON TRACE ADAPTER EXAMPLE:
-#
-# If your C++ program outputs a JSON trace of every comparison and insert,
-# you can subclass FordJohnsonVisualizer and load it like this:
-#
-# class DynamicFordJohnsonVisualizer(FordJohnsonVisualizer):
-#     def get_initial_array(self):
-#         import json
-#         with open("pmergeme_trace.json", "r") as f:
-#             data = json.load(f)
-#             return data.get("initial_array", [9, 2, 12, 5, 7])
-# ===========================================================================
