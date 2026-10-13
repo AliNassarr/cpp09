@@ -3,23 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ford-Johnson Poset & Tournament Tree Visualizer | 42 Module 09</title>
+  <title>Ford-Johnson (PmergeMe) - Super Simple Visualizer</title>
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: #131c2e;
-      --card-border: #1e293b;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
       --text: #f8fafc;
       --text-muted: #94a3b8;
-      --winner: #10b981;
-      --winner-glow: rgba(16, 185, 129, 0.4);
-      --loser: #ef4444;
-      --loser-glow: rgba(239, 68, 68, 0.4);
-      --straggler: #f59e0b;
-      --spine: #6366f1;
-      --spine-glow: rgba(99, 102, 241, 0.5);
-      --accent: #38bdf8;
-      --bound: #c084fc;
+      --big-buddy: #22c55e;
+      --little-buddy: #f43f5e;
+      --solo-kid: #f59e0b;
+      --main-line: #38bdf8;
+      --accent: #a855f7;
       --gold: #fbbf24;
     }
 
@@ -27,7 +22,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
@@ -36,418 +31,279 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding: 1.25rem 2rem;
-      gap: 1.25rem;
-      overflow-x: hidden;
+      padding: 1.5rem 2rem;
+      gap: 1.5rem;
+      align-items: center;
     }
 
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--card-border);
-      padding-bottom: 1rem;
+      text-align: center;
     }
 
-    .title-group h1 {
-      font-size: 1.55rem;
+    h1 {
+      font-size: 2rem;
       font-weight: 800;
-      letter-spacing: -0.02em;
+      color: #38bdf8;
       display: flex;
       align-items: center;
-      gap: 0.65rem;
+      justify-content: center;
+      gap: 0.6rem;
     }
 
-    .badge-unique {
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(56, 189, 248, 0.25));
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      font-size: 0.72rem;
-      padding: 0.2rem 0.6rem;
-      border-radius: 999px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-    }
-
-    .subtitle {
+    .tagline {
       color: var(--text-muted);
-      font-size: 0.85rem;
-      margin-top: 0.25rem;
+      font-size: 1.05rem;
+      margin-top: 0.35rem;
+      font-weight: 600;
     }
 
-    /* CONTROLS TOOLBAR */
-    .toolbar {
+    /* CONTROLS */
+    .control-panel {
       background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 0.85rem 1.25rem;
+      border: 2px solid #334155;
+      border-radius: 18px;
+      padding: 1rem 1.5rem;
       display: flex;
       flex-wrap: wrap;
       gap: 1rem;
       align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 4px 20px -5px rgba(0,0,0,0.5);
+      justify-content: center;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+      max-width: 900px;
+      width: 100%;
     }
 
-    .input-section {
+    .input-box {
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
 
-    .input-section input {
-      background: #090d16;
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      padding: 0.5rem 0.8rem;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      width: 230px;
+    input {
+      background: #0f172a;
+      border: 2px solid #475569;
+      color: #fff;
+      padding: 0.6rem 0.9rem;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: 800;
+      width: 220px;
+      text-align: center;
     }
 
-    .input-section input:focus {
+    input:focus {
       outline: none;
-      border-color: var(--accent);
+      border-color: #38bdf8;
     }
 
     .btn {
-      background: #1e293b;
-      color: var(--text);
-      border: 1px solid #334155;
-      padding: 0.5rem 0.85rem;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
+      background: #334155;
+      color: #fff;
+      border: 2px solid #475569;
+      padding: 0.6rem 1.1rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 800;
       cursor: pointer;
+      transition: all 0.15s ease;
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      transition: all 0.2s ease;
     }
 
     .btn:hover:not(:disabled) {
-      background: #334155;
-      border-color: #475569;
+      transform: translateY(-2px);
+      background: #475569;
     }
 
-    .btn-primary {
-      background: var(--accent);
-      color: #090d16;
-      border-color: var(--accent);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: #7dd3fc;
-      transform: translateY(-1px);
+    .btn:active:not(:disabled) {
+      transform: translateY(1px);
     }
 
     .btn:disabled {
-      opacity: 0.4;
+      opacity: 0.35;
       cursor: not-allowed;
     }
 
-    .presets {
+    .btn-green {
+      background: #10b981;
+      border-color: #059669;
+      color: #022c22;
+    }
+    .btn-green:hover:not(:disabled) { background: #34d399; }
+
+    .btn-blue {
+      background: #0ea5e9;
+      border-color: #0284c7;
+      color: #082f49;
+    }
+    .btn-blue:hover:not(:disabled) { background: #38bdf8; }
+
+    /* BIG PLAYGROUND STAGE */
+    .playground {
+      background: var(--card-bg);
+      border: 3px solid #334155;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 960px;
+      min-height: 440px;
       display: flex;
-      gap: 0.4rem;
+      flex-direction: column;
+      justify-content: space-around;
+      padding: 2rem;
+      position: relative;
+      box-shadow: inset 0 2px 20px rgba(0,0,0,0.4);
+    }
+
+    /* ROWS */
+    .kids-row {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      min-height: 110px;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 18px;
+      padding: 1rem 1.5rem;
+      border: 2px dashed #334155;
+      position: relative;
+    }
+
+    .row-badge {
+      width: 170px;
+      font-size: 1rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      flex-shrink: 0;
+    }
+
+    .row-badge small {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: none;
+    }
+
+    .cards-holder {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
       flex-wrap: wrap;
     }
 
-    .playback-controls {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    /* HUD METRICS */
-    .hud-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-    }
-
-    .metric-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 0.85rem 1.15rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .metric-title {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-    }
-
-    .metric-value {
-      font-size: 1.35rem;
-      font-weight: 800;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .status-badge {
-      display: inline-block;
-      font-size: 0.7rem;
-      padding: 0.15rem 0.5rem;
-      border-radius: 999px;
-      font-weight: 700;
-    }
-
-    .status-optimal {
-      background: rgba(16, 185, 129, 0.2);
-      color: var(--winner);
-      border: 1px solid var(--winner);
-    }
-
-    /* VIEW SWITCHER TABS */
-    .view-switcher {
-      display: flex;
-      background: #090d16;
-      border: 1px solid var(--card-border);
-      border-radius: 10px;
-      padding: 4px;
-      gap: 4px;
-      width: fit-content;
-    }
-
-    .tab-btn {
-      padding: 0.4rem 0.9rem;
-      border-radius: 6px;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .tab-btn.active {
-      background: #1e293b;
-      color: var(--accent);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    }
-
-    /* GRAPH / CANVAS STAGE */
-    .stage-wrapper {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      height: 440px;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      box-shadow: inset 0 2px 15px rgba(0,0,0,0.4);
-    }
-
-    .stage-canvas {
-      width: 100%;
-      height: 100%;
-      position: relative;
-    }
-
-    svg#graph-svg {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-    }
-
-    /* GRAPH NODES (SPHERICAL PARTICLES) */
-    .poset-node {
-      position: absolute;
-      width: 54px;
-      height: 54px;
-      border-radius: 50%;
+    /* THE GIANT FRIENDLY NUMBER CARDS */
+    .kid-card {
+      width: 76px;
+      height: 76px;
+      border-radius: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 1.15rem;
-      font-weight: 800;
+      font-size: 1.9rem;
+      font-weight: 900;
       color: #fff;
-      transform: translate(-50%, -50%);
-      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-      cursor: grab;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      border: 4px solid transparent;
       user-select: none;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+    }
+
+    .kid-card .label {
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-top: -4px;
+      letter-spacing: 0.05em;
+    }
+
+    .card-default {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-color: #60a5fa;
+    }
+
+    .card-big {
+      background: linear-gradient(135deg, #10b981, #047857);
+      border-color: #6ee7b7;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .card-little {
+      background: linear-gradient(135deg, #f43f5e, #be123c);
+      border-color: #fda4af;
+      box-shadow: 0 0 20px rgba(244, 63, 94, 0.4);
+    }
+
+    .card-solo {
+      background: linear-gradient(135deg, #f59e0b, #b45309);
+      border-color: #fde68a;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+    }
+
+    .card-line {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      border-color: #38bdf8;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+    }
+
+    .card-jump {
+      transform: scale(1.22) translateY(-8px) !important;
+      border-color: var(--gold) !important;
+      box-shadow: 0 0 30px rgba(251, 191, 36, 0.8) !important;
       z-index: 10;
     }
 
-    .poset-node:active {
-      cursor: grabbing;
-    }
-
-    .node-winner {
-      background: radial-gradient(circle at 30% 30%, #34d399, #059669);
-      border: 2px solid #6ee7b7;
-      box-shadow: 0 0 20px var(--winner-glow);
-    }
-
-    .node-loser {
-      background: radial-gradient(circle at 30% 30%, #f87171, #dc2626);
-      border: 2px solid #fca5a5;
-      box-shadow: 0 0 15px var(--loser-glow);
-    }
-
-    .node-straggler {
-      background: radial-gradient(circle at 30% 30%, #fbbf24, #d97706);
-      border: 2px solid #fde68a;
-    }
-
-    .node-mainchain {
-      background: radial-gradient(circle at 30% 30%, #818cf8, #4f46e5);
-      border: 2px solid #c7d2fe;
-      box-shadow: 0 0 20px var(--spine-glow);
-    }
-
-    .node-highlighted {
-      transform: translate(-50%, -50%) scale(1.22);
-      border-color: var(--gold) !important;
-      box-shadow: 0 0 25px rgba(251, 191, 36, 0.8) !important;
-      z-index: 20;
-    }
-
-    .node-tag {
-      font-size: 0.58rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-top: -2px;
-      opacity: 0.85;
-    }
-
-    /* EDGES / CONNECTOR RODS */
-    .edge-line {
-      stroke: #334155;
-      stroke-width: 3;
-      stroke-linecap: round;
-      transition: all 0.4s ease;
-    }
-
-    .edge-pair {
-      stroke: var(--loser);
-      stroke-dasharray: 4, 4;
-      stroke-width: 2.5;
-    }
-
-    .edge-spine {
-      stroke: var(--spine);
-      stroke-width: 4;
-      filter: drop-shadow(0 0 6px var(--spine-glow));
-    }
-
-    .edge-solved {
-      stroke: var(--winner);
-      stroke-width: 3.5;
-      filter: drop-shadow(0 0 6px var(--winner-glow));
-    }
-
-    /* LINEAR VIEW FALLBACK */
-    .linear-container {
+    /* SPEECH BUBBLE (STORYTELLER) */
+    .story-bubble {
+      background: #1e293b;
+      border: 3px solid #38bdf8;
+      border-radius: 20px;
+      padding: 1.25rem 1.75rem;
+      max-width: 960px;
       width: 100%;
-      height: 100%;
-      display: none;
-      flex-direction: column;
-      justify-content: center;
-      gap: 2.5rem;
-      padding: 2rem;
-    }
-
-    .linear-row {
       display: flex;
       align-items: center;
       gap: 1.25rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
     }
 
-    .linear-label {
-      width: 130px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
+    .story-avatar {
+      font-size: 2.8rem;
+      flex-shrink: 0;
     }
 
-    .linear-cards {
-      display: flex;
-      gap: 1.2rem;
-    }
-
-    .linear-card {
-      width: 54px;
-      height: 54px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .story-text {
       font-size: 1.2rem;
+      line-height: 1.5;
+      font-weight: 600;
+    }
+
+    .story-text strong {
+      color: #38bdf8;
       font-weight: 800;
-      border: 2px solid var(--card-border);
-      background: #090d16;
-      transition: all 0.3s ease;
     }
 
-    /* BOTTOM EXPLANATION BANNER */
-    .defense-card {
-      background: var(--card-bg);
-      border-left: 4px solid var(--accent);
-      border-radius: 0 12px 12px 0;
-      padding: 1.1rem 1.5rem;
+    /* STATS BADGES AT TOP */
+    .stats-bar {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
       gap: 1.5rem;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      font-size: 1.05rem;
+      font-weight: 800;
+      justify-content: center;
+      flex-wrap: wrap;
     }
 
-    .defense-text {
-      font-size: 0.95rem;
-      line-height: 1.55;
-    }
-
-    .defense-text strong {
-      color: var(--accent);
-    }
-
-    /* COLLAPSIBLE THEORY CARD */
-    details {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 10px;
-      padding: 0.85rem 1.25rem;
-    }
-
-    summary {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--accent);
-      cursor: pointer;
-      user-select: none;
+    .stat-pill {
+      background: #1e293b;
+      border: 2px solid #334155;
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-    }
-
-    .theory-content {
-      margin-top: 0.85rem;
-      border-top: 1px solid var(--card-border);
-      padding-top: 0.85rem;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      line-height: 1.5;
     }
   </style>
 </head>
@@ -455,510 +311,304 @@
 
   <!-- HEADER -->
   <header>
-    <div class="title-group">
-      <h1>
-        Ford-Johnson Poset & Tournament Tree
-        <span class="badge-unique">Order Theory Edition &bull; 42 CPP09</span>
-      </h1>
-      <p class="subtitle">Visualizing Merge-Insertion Sort as a Directed Comparison Graph resolving into a Total Order</p>
-    </div>
-    <div class="view-switcher">
-      <button class="tab-btn active" id="tab-graph" onclick="switchView('graph')">🌳 Poset Tree View</button>
-      <button class="tab-btn" id="tab-linear" onclick="switchView('linear')">📏 Array Shelf View</button>
-    </div>
+    <h1>🎈 The Playground Sorting Story! 🎈</h1>
+    <p class="tagline">How Ford-Johnson puts kids in order using Big Buddies, Little Buddies, and Free VIP Passes!</p>
   </header>
 
-  <!-- CONTROLS TOOLBAR -->
-  <div class="toolbar">
-    <div class="input-section">
-      <label for="array-input" style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">ARRAY:</label>
-      <input type="text" id="array-input" value="9 2 12 5 7" placeholder="e.g. 9 2 12 5 7">
-      <button class="btn btn-primary" id="btn-load">Load & Run</button>
+  <!-- CONTROLS -->
+  <div class="control-panel">
+    <div class="input-box">
+      <span>Numbers:</span>
+      <input type="text" id="array-input" value="9 2 12 5 7">
+      <button class="btn btn-blue" id="btn-load">Start Over</button>
     </div>
 
-    <div class="presets">
-      <button class="btn" onclick="loadPreset([9, 2, 12, 5, 7])">5 Elements (9, 2, 12, 5, 7)</button>
-      <button class="btn" onclick="loadPreset([8, 1, 4, 3, 9, 2, 7])">7 Elements (Deep Recursion)</button>
-      <button class="btn" onclick="loadPreset([9, 8, 7, 6, 5, 4, 3, 2, 1, 0])">10 Reversed</button>
+    <div style="display: flex; gap: 0.5rem;">
+      <button class="btn" onclick="loadArray([9, 2, 12, 5, 7])">Example 1 (9, 2, 12, 5, 7)</button>
+      <button class="btn" onclick="loadArray([8, 1, 4, 3, 9, 2, 7])">Example 2 (8, 1, 4, 3, 9, 2, 7)</button>
     </div>
 
-    <div class="playback-controls">
-      <button class="btn" id="btn-first" title="First Step">⏮</button>
-      <button class="btn" id="btn-prev" title="Previous Step">◀ Prev</button>
-      <button class="btn btn-primary" id="btn-play">▶ Play</button>
-      <button class="btn" id="btn-next" title="Next Step">Next ▶</button>
-      <button class="btn" id="btn-last" title="Last Step">⏭</button>
+    <div style="display: flex; gap: 0.5rem;">
+      <button class="btn" id="btn-prev">◀ Back</button>
+      <button class="btn btn-green" id="btn-next">Next Step ▶</button>
     </div>
   </div>
 
-  <!-- HUD METRICS -->
-  <div class="hud-grid">
-    <div class="metric-card">
-      <span class="metric-title">Elements (N)</span>
-      <div class="metric-value" id="hud-n">5</div>
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-pill">
+      <span>Step:</span>
+      <span id="stat-step" style="color: #38bdf8;">1 of 6</span>
     </div>
-    <div class="metric-card">
-      <span class="metric-title">Mathematical Phase</span>
-      <div class="metric-value" style="font-size: 1.05rem;" id="hud-phase">Initial Chaos</div>
+    <div class="stat-pill">
+      <span>Questions Asked (Comparisons):</span>
+      <span id="stat-comps" style="color: #10b981;">0</span>
     </div>
-    <div class="metric-card">
-      <span class="metric-title">Comparisons / Knuth Limit F(N)</span>
-      <div class="metric-value">
-        <span id="hud-comparisons">0</span> / <span id="hud-bound">7</span>
-        <span class="status-badge status-optimal">OPTIMAL</span>
+    <div class="stat-pill">
+      <span>Status:</span>
+      <span id="stat-status" style="color: #fbbf24;">Ready to play!</span>
+    </div>
+  </div>
+
+  <!-- PLAYGROUND CANVAS -->
+  <div class="playground">
+
+    <!-- Row 1: The Tall Kids Line / The Main Line -->
+    <div class="kids-row" id="row-main">
+      <div class="row-badge" style="color: #38bdf8;">
+        🏆 The Main Line
+        <small>Kids in order</small>
       </div>
-    </div>
-    <div class="metric-card">
-      <span class="metric-title">Poset Topological Depth</span>
-      <div class="metric-value" style="font-size: 1.05rem;" id="hud-depth">Depth 1 (Pairs)</div>
-    </div>
-  </div>
-
-  <!-- STAGE / VISUAL CANVAS -->
-  <div class="stage-wrapper">
-    <!-- GRAPH VIEW -->
-    <div class="stage-canvas" id="graph-stage">
-      <svg id="graph-svg"></svg>
-      <!-- Nodes will be injected here dynamically -->
+      <div class="cards-holder" id="cards-main"></div>
     </div>
 
-    <!-- LINEAR ARRAY VIEW (Optional toggle) -->
-    <div class="linear-container" id="linear-stage">
-      <div class="linear-row">
-        <span class="linear-label">mainChain</span>
-        <div class="linear-cards" id="linear-mainchain"></div>
+    <!-- Row 2: Big Buddies -->
+    <div class="kids-row" id="row-big">
+      <div class="row-badge" style="color: #10b981;">
+        👑 Big Buddies
+        <small>The taller kids</small>
       </div>
-      <div class="linear-row">
-        <span class="linear-label">Pending Losers</span>
-        <div class="linear-cards" id="linear-losers"></div>
+      <div class="cards-holder" id="cards-big"></div>
+    </div>
+
+    <!-- Row 3: Little Buddies -->
+    <div class="kids-row" id="row-little">
+      <div class="row-badge" style="color: #f43f5e;">
+        🎒 Little Buddies
+        <small>Waiting their turn</small>
       </div>
+      <div class="cards-holder" id="cards-little"></div>
+    </div>
+
+  </div>
+
+  <!-- STORYTELLER BUBBLE -->
+  <div class="story-bubble">
+    <div class="story-avatar" id="story-avatar">🤖</div>
+    <div class="story-text" id="story-text">
+      Let's get these kids in order from <strong>smallest to biggest</strong>! Click <strong>Next Step ▶</strong> to begin!
     </div>
   </div>
 
-  <!-- DEFENSE EXPLANATION CARD -->
-  <div class="defense-card">
-    <div class="defense-text" id="explanation-text">
-      Welcome to the <strong>Ford-Johnson Poset Tree Visualizer</strong>. Each arrow represents a <em>proven dominance edge</em> ($A \rightarrow B$ means $A > B$). Watch the partial order resolve into a straight line!
-    </div>
-    <span class="badge-unique" id="step-indicator" style="flex-shrink: 0;">Step 0 / 0</span>
-  </div>
-
-  <!-- ORDER THEORY CHEAT SHEET -->
-  <details>
-    <summary>🎓 What Makes This Representation Unique? (Defense Theory)</summary>
-    <div class="theory-content">
-      <strong>Donald Knuth &amp; Lester Ford's Original Insight (1959):</strong><br>
-      Sorting is fundamentally the conversion of a <em>Partially Ordered Set (Poset)</em> with 0 known relations into a <em>Total Order (Chain)</em>. 
-      Standard sorting algorithms (like Bubble or QuickSort) waste comparisons on elements whose relative order is already partially implied. 
-      Ford-Johnson is the theoretical minimum-comparison sort because it structures comparisons as a <strong>balanced tournament tree of pairs</strong>, 
-      where losers hang from their winners. Inserting losers in reverse Jacobsthal order maximizes the information entropy gained at every single binary search step!
-    </div>
-  </details>
-
-  <!-- JAVASCRIPT POSET ENGINE -->
   <script>
-    // Knuth theoretical maximum comparisons F(N)
-    function knuthBound(n) {
-      if (n <= 1) return 0;
-      let sum = 0;
-      for (let k = 1; k <= n; k++) sum += Math.ceil(Math.log2(0.75 * k));
-      return sum;
-    }
+    let steps = [];
+    let currentStep = 0;
 
-    let activeView = 'graph';
-    let states = [];
-    let currentIndex = 0;
-    let timer = null;
+    function buildStory(numbers) {
+      const story = [];
+      let comps = 0;
 
-    function switchView(viewName) {
-      activeView = viewName;
-      document.getElementById('tab-graph').classList.toggle('active', viewName === 'graph');
-      document.getElementById('tab-linear').classList.toggle('active', viewName === 'linear');
-      document.getElementById('graph-stage').style.display = (viewName === 'graph') ? 'block' : 'none';
-      document.getElementById('linear-stage').style.display = (viewName === 'linear') ? 'flex' : 'none';
-      if (states.length > 0) renderState(states[currentIndex]);
-    }
-
-    // Build Poset Graph States
-    function buildPosetStates(input) {
-      const recorded = [];
-      let compCount = 0;
-      const boundF = knuthBound(input.length);
-
-      function compare(a, b) {
-        compCount++;
-        return a < b;
-      }
-
-      function snap(phase, depthName, explanation, nodes, edges, activeNodeVal = null) {
-        recorded.push({
-          phase,
-          depthName,
-          explanation,
-          nodes: JSON.parse(JSON.stringify(nodes)),
-          edges: JSON.parse(JSON.stringify(edges)),
-          activeNodeVal,
-          comparisons: compCount,
-          boundF
-        });
-      }
-
-      const W = 950;
-      const H = 440;
-
-      // State 0: Raw Input
-      const rawNodes = input.map((val, i) => ({
-        val,
-        x: (W / (input.length + 1)) * (i + 1),
-        y: H * 0.5,
-        role: 'default',
-        tag: ''
-      }));
-      snap("Phase 0: Chaos", "Unordered (0 edges)",
-        `Starting with ${input.length} isolated elements with zero known relations. Total information entropy = maximum.`,
-        rawNodes, []);
-
-      if (input.length < 2) return recorded;
-
-      // Phase 1: In-Pair Dominance Rods
-      const hasOdd = (input.length % 2 !== 0);
-      const stragglerVal = hasOdd ? input[input.length - 1] : null;
-      const pairs = [];
-      const winners = [];
-
-      for (let i = 0; i + 1 < input.length; i += 2) {
-        let w = input[i];
-        let l = input[i + 1];
-        if (compare(w, l)) { const tmp = w; w = l; l = tmp; }
-        pairs.push({ winner: w, loser: l });
-        winners.push(w);
-      }
-
-      // Graph positions for pairs (Winner above, Loser suspended below)
-      const pairNodes = [];
-      const pairEdges = [];
-      const numCols = pairs.length + (hasOdd ? 1 : 0);
-
-      pairs.forEach((p, idx) => {
-        const cx = (W / (numCols + 1)) * (idx + 1);
-        pairNodes.push({ val: p.winner, x: cx, y: H * 0.28, role: 'winner', tag: 'winner' });
-        pairNodes.push({ val: p.loser,  x: cx, y: H * 0.72, role: 'loser', tag: 'loser' });
-        pairEdges.push({ from: p.winner, to: p.loser, type: 'pair' });
+      // STEP 0: Introduction
+      story.push({
+        avatar: "👋",
+        status: "Starting",
+        comps: 0,
+        mainRow: [],
+        bigRow: numbers.map(n => ({ val: n, type: 'default', label: 'kid' })),
+        littleRow: [],
+        text: `Look! We have <strong>${numbers.length} kids</strong>: [${numbers.join(', ')}]. They are all mixed up! Let's line them up from smallest to biggest!`
       });
 
-      if (hasOdd) {
-        const cx = (W / (numCols + 1)) * (pairs.length + 1);
-        pairNodes.push({ val: stragglerVal, x: cx, y: H * 0.5, role: 'straggler', tag: 'odd' });
+      // STEP 1: Buddy Up!
+      const pairs = [];
+      const winners = [];
+      const hasOdd = (numbers.length % 2 !== 0);
+      const straggler = hasOdd ? numbers[numbers.length - 1] : null;
+
+      for (let i = 0; i + 1 < numbers.length; i += 2) {
+        comps++;
+        let a = numbers[i], b = numbers[i+1];
+        let big = Math.max(a, b);
+        let little = Math.min(a, b);
+        pairs.push({ big, little });
+        winners.push(big);
       }
 
-      snap("Phase 1: Binary Pairs", "Depth 1 (Pairs)",
-        `Adjacent elements compared: created ${pairs.length} vertical <strong>dominance rods</strong>. Each winner ($W$) now strictly dominates its loser ($L$). Straggler floats independently.`,
-        pairNodes, pairEdges);
+      story.push({
+        avatar: "🤝",
+        status: "Buddy Up!",
+        comps: comps,
+        mainRow: [],
+        bigRow: pairs.map(p => ({ val: p.big, type: 'big', label: 'BIG' })),
+        littleRow: [
+          ...pairs.map(p => ({ val: p.little, type: 'little', label: 'little' })),
+          ...(hasOdd ? [{ val: straggler, type: 'solo', label: 'SOLO' }] : [])
+        ],
+        text: `<strong>Step 1: Buddy Up!</strong> Kids hold hands in pairs! In each pair, the taller kid becomes the <strong>Big Buddy (Green)</strong> and steps up, while the shorter kid becomes the <strong>Little Buddy (Red)</strong>! ${hasOdd ? `And kid <strong>${straggler}</strong> didn't have a buddy, so he is the <strong>Solo Kid (Yellow)</strong>!` : ''}`
+      });
 
-      // Phase 2: The Golden Spine (Recursive Winners Tree)
+      // STEP 2: Line Up Big Buddies
       const sortedWinners = [...winners].sort((a, b) => a - b);
       const alignedLosers = [];
       for (let i = 0; i < sortedWinners.length; i++) {
-        const p = pairs.find(pair => pair.winner === sortedWinners[i]);
-        alignedLosers.push(p.loser);
+        const found = pairs.find(p => p.big === sortedWinners[i]);
+        alignedLosers.push(found.little);
       }
+      if (hasOdd) alignedLosers.push(straggler);
 
-      // Positions: Sorted winners form the horizontal golden spine at top
-      const spineNodes = [];
-      const spineEdges = [];
+      story.push({
+        avatar: "👑",
+        status: "Lining Up Big Buddies",
+        comps: comps,
+        mainRow: sortedWinners.map(w => ({ val: w, type: 'big', label: 'BIG' })),
+        bigRow: [],
+        littleRow: alignedLosers.map((l, i) => ({
+          val: l,
+          type: (hasOdd && i === alignedLosers.length - 1) ? 'solo' : 'little',
+          label: (hasOdd && i === alignedLosers.length - 1) ? 'SOLO' : 'little'
+        })),
+        text: `<strong>Step 2: Line Up the Big Buddies!</strong> We recursively sort the Big Buddies from smallest to biggest: <strong>[${sortedWinners.join(', ')}]</strong>. Their Little Buddies stay right under them!`
+      });
 
-      sortedWinners.forEach((w, i) => {
-        const cx = (W / (sortedWinners.length + 2)) * (i + 1.5);
-        spineNodes.push({ val: w, x: cx, y: H * 0.28, role: 'mainchain', tag: `w_${i+1}` });
-        // Paired loser hangs directly underneath
-        const l = alignedLosers[i];
-        spineNodes.push({ val: l, x: cx, y: H * 0.72, role: 'loser', tag: `l_${i+1}` });
-        spineEdges.push({ from: w, to: l, type: 'pair' });
+      // STEP 3: Free VIP Pass!
+      const firstLittle = alignedLosers[0];
+      const mainLine = [firstLittle, ...sortedWinners];
 
-        // Backbone chain edge between adjacent winners
-        if (i > 0) {
-          spineEdges.push({ from: sortedWinners[i - 1], to: w, type: 'spine' });
+      story.push({
+        avatar: "🎟️",
+        status: "Free VIP Pass!",
+        comps: comps,
+        mainRow: mainLine.map((n, i) => ({
+          val: n,
+          type: i === 0 ? 'little' : 'line',
+          jump: i === 0,
+          label: i === 0 ? 'VIP!' : 'in line'
+        })),
+        bigRow: [],
+        littleRow: alignedLosers.slice(1).map((l, i) => ({
+          val: l,
+          type: (hasOdd && i === alignedLosers.length - 2) ? 'solo' : 'little',
+          label: (hasOdd && i === alignedLosers.length - 2) ? 'SOLO' : 'little'
+        })),
+        text: `<strong>Step 3: The Magic VIP Pass!</strong> Look at Little Buddy <strong>${firstLittle}</strong>. His Big Buddy <strong>${sortedWinners[0]}</strong> is the smallest of all the big kids! Since ${firstLittle} is even smaller than him, ${firstLittle} MUST be the smallest kid in the whole playground! He walks to the very front for <strong>FREE (0 comparisons)!</strong>`
+      });
+
+      // STEP 4+: Insert remaining little buddies
+      for (let i = 1; i < alignedLosers.length; i++) {
+        const kid = alignedLosers[i];
+        const isSolo = (hasOdd && i === alignedLosers.length - 1);
+        
+        // Find where kid inserts
+        let insertPos = 0;
+        while (insertPos < mainLine.length && mainLine[insertPos] < kid) {
+          insertPos++;
         }
+        comps += (isSolo ? 2 : 1); // approximate comparison cost
+
+        mainLine.splice(insertPos, 0, kid);
+
+        story.push({
+          avatar: isSolo ? "🎈" : "🦘",
+          status: isSolo ? "Solo Kid Joins" : "Little Buddy Hops In",
+          comps: comps,
+          mainRow: mainLine.map(n => ({
+            val: n,
+            type: 'line',
+            jump: n === kid,
+            label: n === kid ? 'new!' : 'in line'
+          })),
+          bigRow: [],
+          littleRow: alignedLosers.slice(i + 1).map((l, j) => ({
+            val: l,
+            type: (hasOdd && j === alignedLosers.length - i - 2) ? 'solo' : 'little',
+            label: (hasOdd && j === alignedLosers.length - i - 2) ? 'SOLO' : 'little'
+          })),
+          text: isSolo
+            ? `<strong>Almost Done!</strong> Solo Kid <strong>${kid}</strong> hops into the line between ${mainLine[insertPos-1] || 'start'} and ${mainLine[insertPos+1] || 'end'}!`
+            : `<strong>Step 4: Little Buddy Hops In!</strong> Little Buddy <strong>${kid}</strong> knows he is smaller than his Big Buddy, so he quickly finds his spot between ${mainLine[insertPos-1] || 'start'} and ${mainLine[insertPos+1] || 'end'}!`
+        });
+      }
+
+      // FINAL STEP: Celebration!
+      story.push({
+        avatar: "🎉",
+        status: "All Done!",
+        comps: comps,
+        mainRow: mainLine.map(n => ({ val: n, type: 'big', label: 'STAR ⭐' })),
+        bigRow: [],
+        littleRow: [],
+        text: `🎊 <strong>Hooray! All Done!</strong> Every single kid is in perfect order from smallest to biggest: <strong>[${mainLine.join(', ')}]</strong>! We did it in only <strong>${comps} quick questions</strong>! You're ready to pass the evaluation!`
       });
 
-      if (hasOdd) {
-        spineNodes.push({ val: stragglerVal, x: W * 0.88, y: H * 0.5, role: 'straggler', tag: 'odd' });
-      }
-
-      snap("Phase 2: Golden Spine", "Tree of Dominance",
-        `Winners recursively sorted into the <strong>Golden Backbone Spine</strong> ($W_1 < W_2 < ...$). Each loser hangs suspended like a pendulum from its proven winner!`,
-        spineNodes, spineEdges);
-
-      // Phase 3: Free Insertion of First Loser (b1)
-      const firstLoser = alignedLosers[0];
-      const firstWinner = sortedWinners[0];
-
-      // Re-layout: first loser swings to the front of the spine
-      const currentChain = [firstLoser, ...sortedWinners];
-      const p3Nodes = [];
-      const p3Edges = [];
-
-      // Chain is now [firstLoser, sortedWinners...]
-      currentChain.forEach((val, i) => {
-        const cx = (W / (currentChain.length + 2)) * (i + 1);
-        const isLoser = (val === firstLoser);
-        p3Nodes.push({ val, x: cx, y: H * 0.28, role: 'mainchain', tag: isLoser ? 'free b₁' : `w` });
-        if (i > 0) p3Edges.push({ from: currentChain[i - 1], to: val, type: 'spine' });
-      });
-
-      // Remaining hanging losers
-      for (let i = 1; i < sortedWinners.length; i++) {
-        const wVal = sortedWinners[i];
-        const lVal = alignedLosers[i];
-        const parentNode = p3Nodes.find(n => n.val === wVal);
-        p3Nodes.push({ val: lVal, x: parentNode.x, y: H * 0.72, role: 'loser', tag: `l_${i+1}` });
-        p3Edges.push({ from: wVal, to: lVal, type: 'pair' });
-      }
-
-      if (hasOdd) {
-        p3Nodes.push({ val: stragglerVal, x: W * 0.9, y: H * 0.5, role: 'straggler', tag: 'odd' });
-      }
-
-      snap("Phase 3: Free Insertion", "Pendant b₁ Swings Up",
-        `Because Loser <strong>${firstLoser}</strong> hangs under <strong>${firstWinner}</strong> (the smallest winner), it is guaranteed smaller than the entire spine! Swings up with <strong>0 comparisons</strong>.`,
-        p3Nodes, p3Edges, firstLoser);
-
-      // Phase 4: Jacobsthal Splicing into Spine
-      // Full list of losers to insert
-      const losersToInsert = [...alignedLosers.slice(1)];
-      if (hasOdd) losersToInsert.push(stragglerVal);
-
-      // Insert remaining losers into currentChain
-      let jPrev = 1;
-      let jCurr = 3;
-
-      while (jPrev < alignedLosers.length + (hasOdd ? 1 : 0)) {
-        const batch = [];
-        const maxK = Math.min(jCurr, alignedLosers.length + (hasOdd ? 1 : 0));
-        for (let k = maxK; k > jPrev; --k) batch.push(k - 1);
-
-        for (let b = 0; b < batch.length; b++) {
-          const idx = batch[b];
-          if (idx === 0) continue; // b1 already inserted
-
-          let itemToInsert = null;
-          let pairedWinner = null;
-
-          if (idx < alignedLosers.length) {
-            itemToInsert = alignedLosers[idx];
-            pairedWinner = sortedWinners[idx];
-          } else if (hasOdd && idx === alignedLosers.length) {
-            itemToInsert = stragglerVal;
-            pairedWinner = null;
-          }
-
-          if (itemToInsert === null) continue;
-
-          // Binary search bounded before pairedWinner
-          let boundIdx = currentChain.length;
-          if (pairedWinner !== null) {
-            boundIdx = currentChain.indexOf(pairedWinner);
-          }
-
-          // Simulation of binary search
-          let low = 0;
-          let high = boundIdx;
-          while (low < high) {
-            const mid = Math.floor((low + high) / 2);
-            if (compare(currentChain[mid], itemToInsert)) low = mid + 1;
-            else high = mid;
-          }
-
-          currentChain.splice(low, 0, itemToInsert);
-
-          // Build snapshot with item newly spliced into chain
-          const stepNodes = [];
-          const stepEdges = [];
-
-          currentChain.forEach((val, i) => {
-            const cx = (W / (currentChain.length + 1)) * (i + 1);
-            stepNodes.push({ val, x: cx, y: H * 0.28, role: 'mainchain', tag: val === itemToInsert ? 'spliced' : '' });
-            if (i > 0) stepEdges.push({ from: currentChain[i - 1], to: val, type: 'spine' });
-          });
-
-          // Uninserted losers remain hanging
-          losersToInsert.forEach(lVal => {
-            if (!currentChain.includes(lVal)) {
-              stepNodes.push({ val: lVal, x: W * 0.85, y: H * 0.72, role: 'loser', tag: 'pending' });
-            }
-          });
-
-          snap("Phase 4: Jacobsthal Splicing", "Untangling into Spine",
-            `Pendant <strong>${itemToInsert}</strong> spliced into the spine at position ${low}. ${pairedWinner !== null ? `Search bounded strictly below paired winner <strong>${pairedWinner}</strong>!` : 'Straggler searched across full chain.'}`,
-            stepNodes, stepEdges, itemToInsert);
-        }
-
-        const nextJ = jCurr + 2 * jPrev;
-        jPrev = jCurr;
-        jCurr = nextJ;
-      }
-
-      // Final State: The Total Order (Single Straight Golden Chain)
-      const finalNodes = currentChain.map((val, i) => ({
-        val,
-        x: (W / (currentChain.length + 1)) * (i + 1),
-        y: H * 0.5,
-        role: 'winner',
-        tag: `#${i+1}`
-      }));
-      const finalEdges = [];
-      for (let i = 0; i < currentChain.length - 1; i++) {
-        finalEdges.push({ from: currentChain[i], to: currentChain[i + 1], type: 'solved' });
-      }
-
-      snap("Total Order Reached", "Strict Linear Order",
-        `🎉 <strong>Topological Sort Complete!</strong> The entire 2D poset tree has completely resolved into a 1D Total Order: <strong>[${currentChain.join(' &rarr; ')}]</strong> with ${compCount} comparisons (Knuth Limit: ${boundF}).`,
-        finalNodes, finalEdges);
-
-      return recorded;
+      return story;
     }
 
-    // Render Function
-    function renderState(state) {
-      document.getElementById('hud-phase').textContent = state.phase;
-      document.getElementById('hud-comparisons').textContent = state.comparisons;
-      document.getElementById('hud-bound').textContent = state.boundF;
-      document.getElementById('hud-depth').textContent = state.depthName;
-      document.getElementById('explanation-text').innerHTML = state.explanation;
-      document.getElementById('step-indicator').textContent = `Step ${currentIndex + 1} / ${states.length}`;
+    function render() {
+      const step = steps[currentStep];
 
-      if (activeView === 'graph') {
-        renderGraphView(state);
-      } else {
-        renderLinearView(state);
+      // Update text & stats
+      document.getElementById('stat-step').textContent = `${currentStep + 1} of ${steps.length}`;
+      document.getElementById('stat-comps').textContent = step.comps;
+      document.getElementById('stat-status').textContent = step.status;
+      document.getElementById('story-avatar').textContent = step.avatar;
+      document.getElementById('story-text').innerHTML = step.text;
+
+      // Render rows
+      function fillRow(containerId, items) {
+        const c = document.getElementById(containerId);
+        c.innerHTML = '';
+        items.forEach(item => {
+          const card = document.createElement('div');
+          card.className = `kid-card card-${item.type} ${item.jump ? 'card-jump' : ''}`;
+          card.innerHTML = `<span>${item.val}</span><span class="label">${item.label}</span>`;
+          c.appendChild(card);
+        });
       }
 
-      document.getElementById('btn-prev').disabled = (currentIndex === 0);
-      document.getElementById('btn-first').disabled = (currentIndex === 0);
-      document.getElementById('btn-next').disabled = (currentIndex === states.length - 1);
-      document.getElementById('btn-last').disabled = (currentIndex === states.length - 1);
+      fillRow('cards-main', step.mainRow);
+      fillRow('cards-big', step.bigRow);
+      fillRow('cards-little', step.littleRow);
+
+      // Hide empty rows to save space
+      document.getElementById('row-main').style.display = step.mainRow.length > 0 ? 'flex' : 'none';
+      document.getElementById('row-big').style.display = step.bigRow.length > 0 ? 'flex' : 'none';
+      document.getElementById('row-little').style.display = step.littleRow.length > 0 ? 'flex' : 'none';
+
+      // Controls disabled state
+      document.getElementById('btn-prev').disabled = (currentStep === 0);
+      document.getElementById('btn-next').disabled = (currentStep === steps.length - 1);
     }
 
-    function renderGraphView(state) {
-      const stage = document.getElementById('graph-stage');
-      const svg = document.getElementById('graph-svg');
-
-      // Remove existing node divs (preserve SVG)
-      stage.querySelectorAll('.poset-node').forEach(el => el.remove());
-      svg.innerHTML = '';
-
-      // Draw Edges first
-      state.edges.forEach(edge => {
-        const fromNode = state.nodes.find(n => n.val === edge.from);
-        const toNode = state.nodes.find(n => n.val === edge.to);
-        if (!fromNode || !toNode) return;
-
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', fromNode.x);
-        line.setAttribute('y1', fromNode.y);
-        line.setAttribute('x2', toNode.x);
-        line.setAttribute('y2', toNode.y);
-        line.setAttribute('class', `edge-line edge-${edge.type}`);
-        svg.appendChild(line);
-      });
-
-      // Draw Nodes
-      state.nodes.forEach(n => {
-        const el = document.createElement('div');
-        el.className = `poset-node node-${n.role}`;
-        if (state.activeNodeVal === n.val) el.classList.add('node-highlighted');
-        el.style.left = `${n.x}px`;
-        el.style.top = `${n.y}px`;
-
-        el.innerHTML = `<span>${n.val}</span>${n.tag ? `<span class="node-tag">${n.tag}</span>` : ''}`;
-        stage.appendChild(el);
-      });
+    function loadArray(arr) {
+      document.getElementById('array-input').value = arr.join(' ');
+      steps = buildStory(arr);
+      currentStep = 0;
+      render();
     }
 
-    function renderLinearView(state) {
-      const mcContainer = document.getElementById('linear-mainchain');
-      const lContainer = document.getElementById('linear-losers');
-      mcContainer.innerHTML = '';
-      lContainer.innerHTML = '';
-
-      state.nodes.forEach(n => {
-        const card = document.createElement('div');
-        card.className = `linear-card`;
-        if (n.role === 'winner' || n.role === 'mainchain') {
-          card.style.borderColor = 'var(--winner)';
-          card.style.color = '#86efac';
-          card.textContent = n.val;
-          mcContainer.appendChild(card);
-        } else {
-          card.style.borderColor = n.role === 'straggler' ? 'var(--straggler)' : 'var(--loser)';
-          card.style.color = n.role === 'straggler' ? '#fcd34d' : '#fca5a5';
-          card.textContent = n.val;
-          lContainer.appendChild(card);
-        }
-      });
-    }
-
-    function goTo(idx) {
-      if (idx < 0 || idx >= states.length) return;
-      currentIndex = idx;
-      renderState(states[currentIndex]);
-    }
-
-    function togglePlay() {
-      const btn = document.getElementById('btn-play');
-      if (timer) {
-        clearInterval(timer);
-        timer = null;
-        btn.textContent = '▶ Play';
-        btn.classList.add('btn-primary');
-      } else {
-        btn.textContent = '⏸ Pause';
-        btn.classList.remove('btn-primary');
-        timer = setInterval(() => {
-          if (currentIndex < states.length - 1) {
-            goTo(currentIndex + 1);
-          } else {
-            togglePlay();
-          }
-        }, 1200);
-      }
-    }
-
-    function loadArrayFromInput() {
-      if (timer) togglePlay();
-      const raw = document.getElementById('array-input').value.trim();
-      const parts = raw.split(/[\s,]+/).filter(Boolean).map(Number);
-      if (parts.length === 0 || parts.some(isNaN)) {
-        alert("Please enter valid positive integers.");
+    document.getElementById('btn-load').onclick = () => {
+      const val = document.getElementById('array-input').value.trim();
+      const nums = val.split(/[\s,]+/).filter(Boolean).map(Number);
+      if (nums.length < 2 || nums.some(isNaN)) {
+        alert("Please enter at least 2 numbers separated by spaces!");
         return;
       }
-      document.getElementById('hud-n').textContent = parts.length;
-      states = buildPosetStates(parts);
-      goTo(0);
-    }
+      loadArray(nums);
+    };
 
-    function loadPreset(arr) {
-      document.getElementById('array-input').value = arr.join(' ');
-      loadArrayFromInput();
-    }
+    document.getElementById('btn-next').onclick = () => {
+      if (currentStep < steps.length - 1) {
+        currentStep++;
+        render();
+      }
+    };
 
-    // Event Listeners
-    document.getElementById('btn-load').onclick = loadArrayFromInput;
-    document.getElementById('btn-next').onclick = () => goTo(currentIndex + 1);
-    document.getElementById('btn-prev').onclick = () => goTo(currentIndex - 1);
-    document.getElementById('btn-first').onclick = () => goTo(0);
-    document.getElementById('btn-last').onclick = () => goTo(states.length - 1);
-    document.getElementById('btn-play').onclick = togglePlay;
+    document.getElementById('btn-prev').onclick = () => {
+      if (currentStep > 0) {
+        currentStep--;
+        render();
+      }
+    };
 
+    // Keyboard support
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT') return;
-      if (e.key === 'ArrowRight') goTo(currentIndex + 1);
-      if (e.key === 'ArrowLeft') goTo(currentIndex - 1);
-      if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+      if (e.key === 'ArrowRight') document.getElementById('btn-next').click();
+      if (e.key === 'ArrowLeft') document.getElementById('btn-prev').click();
     });
 
-    // Initialize
-    loadArrayFromInput();
+    // Start with 9 2 12 5 7
+    loadArray([9, 2, 12, 5, 7]);
   </script>
 </body>
 </html>
