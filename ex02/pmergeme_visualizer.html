@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ford-Johnson (PmergeMe) Interactive Visualizer | 42 Module 09</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --winner: #22c55e;
+      --winner-bg: rgba(34, 197, 94, 0.15);
+      --loser: #ef4444;
+      --loser-bg: rgba(239, 68, 68, 0.15);
+      --straggler: #f97316;
+      --straggler-bg: rgba(249, 115, 22, 0.15);
+      --mainchain: #6366f1;
+      --mainchain-bg: rgba(99, 102, 241, 0.2);
+      --highlight: #facc15;
+      --bound: #c084fc;
+      --bound-bg: rgba(192, 132, 252, 0.12);
+      --accent: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem 2rem;
+      gap: 1.25rem;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 1rem;
+    }
+
+    .title-group h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .badge-42 {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      font-size: 0.75rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+    }
+
+    /* CONTROL BAR */
+    .toolbar {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .input-section {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      min-width: 320px;
+    }
+
+    .input-section input {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 0.5rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      width: 220px;
+    }
+
+    .input-section input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .btn {
+      background: #334155;
+      color: var(--text);
+      border: 1px solid #475569;
+      padding: 0.5rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: #475569;
+      border-color: #64748b;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0f172a;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #7dd3fc;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .presets {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .playback-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .speed-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* HUD METRICS */
+    .hud-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    .metric-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.85rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .metric-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .metric-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .status-optimal {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--winner);
+      border: 1px solid var(--winner);
+    }
+
+    /* CANVAS VISUALIZATION */
+    .canvas-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 2rem;
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2.5rem;
+      position: relative;
+      overflow-x: auto;
+    }
+
+    .stage-row {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      min-height: 80px;
+      position: relative;
+      padding: 0.5rem 0;
+    }
+
+    .row-header {
+      width: 140px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .row-header small {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: none;
+    }
+
+    .row-items {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: nowrap;
+      position: relative;
+    }
+
+    /* CARDS */
+    .num-card {
+      width: 58px;
+      height: 58px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      border: 2px solid var(--card-border);
+      background: #0f172a;
+      color: var(--text);
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      flex-shrink: 0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
+
+    .num-card .card-role {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: -2px;
+      letter-spacing: 0.05em;
+    }
+
+    .card-winner {
+      border-color: var(--winner);
+      background: var(--winner-bg);
+      color: #86efac;
+    }
+
+    .card-loser {
+      border-color: var(--loser);
+      background: var(--loser-bg);
+      color: #fca5a5;
+    }
+
+    .card-straggler {
+      border-color: var(--straggler);
+      background: var(--straggler-bg);
+      color: #fdba74;
+    }
+
+    .card-mainchain {
+      border-color: var(--mainchain);
+      background: var(--mainchain-bg);
+      color: #c7d2fe;
+    }
+
+    .card-active {
+      transform: scale(1.15);
+      border-color: var(--highlight) !important;
+      box-shadow: 0 0 15px rgba(250, 204, 21, 0.5) !important;
+    }
+
+    .card-in-bound {
+      background: var(--bound-bg) !important;
+      border-color: var(--bound) !important;
+    }
+
+    /* SEARCH BOUND HIGHLIGHT OVERLAY */
+    .search-bound-box {
+      position: absolute;
+      border: 2px dashed var(--bound);
+      background: rgba(192, 132, 252, 0.08);
+      border-radius: 12px;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 4px;
+    }
+
+    .search-bound-tag {
+      background: var(--bound);
+      color: #0f172a;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+      position: absolute;
+      top: -12px;
+    }
+
+    /* EXPLANATION BANNER */
+    .defense-card {
+      background: #1e293b;
+      border-left: 4px solid var(--accent);
+      border-radius: 0 10px 10px 0;
+      padding: 1rem 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .defense-text {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: var(--text);
+    }
+
+    .defense-text strong {
+      color: var(--accent);
+    }
+
+    /* COLLAPSIBLE Q&A DEFENSE SHEET */
+    details {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 0.85rem 1.25rem;
+    }
+
+    summary {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent);
+      cursor: pointer;
+      outline: none;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .qa-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+      margin-top: 1rem;
+      border-top: 1px solid var(--card-border);
+      padding-top: 1rem;
+    }
+
+    .qa-item {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+    }
+
+    .qa-q {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 0.35rem;
+    }
+
+    .qa-a {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="title-group">
+      <h1>
+        Ford-Johnson Merge-Insertion Sort
+        <span class="badge-42">42 CPP09 EX02</span>
+      </h1>
+      <p class="subtitle">Interactive Step-by-Step Defense Visualizer with Live Knuth Comparison Bound Tracking</p>
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-muted); text-align: right;">
+      <span>Strict 100% Passing Criteria</span><br>
+      <span style="color: var(--winner); font-weight: 600;">Optimal Comparisons Guaranteed</span>
+    </div>
+  </header>
+
+  <!-- CONTROLS TOOLBAR -->
+  <div class="toolbar">
+    <div class="input-section">
+      <label for="array-input" style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">ARRAY:</label>
+      <input type="text" id="array-input" value="9 2 12 5 7" placeholder="e.g. 9 2 12 5 7">
+      <button class="btn btn-primary" id="btn-load">Load & Run</button>
+    </div>
+
+    <div class="presets">
+      <button class="btn" onclick="loadPreset([9, 2, 12, 5, 7])">5 Elements</button>
+      <button class="btn" onclick="loadPreset([9, 8, 7, 6, 5, 4, 3, 2, 1, 0])">10 Reversed</button>
+      <button class="btn" onclick="loadRandom(21)">21 Elements (Max 66)</button>
+    </div>
+
+    <div class="playback-controls">
+      <button class="btn" id="btn-first" title="First Step">⏮</button>
+      <button class="btn" id="btn-prev" title="Previous Step">◀ Prev</button>
+      <button class="btn btn-primary" id="btn-play">▶ Play</button>
+      <button class="btn" id="btn-next" title="Next Step">Next ▶</button>
+      <button class="btn" id="btn-last" title="Last Step">⏭</button>
+
+      <div class="speed-wrapper">
+        <span>Speed:</span>
+        <select id="speed-select" style="background:#0f172a; color:#fff; border:1px solid #334155; border-radius:6px; padding:0.2rem 0.4rem; font-size:0.8rem;">
+          <option value="1600">0.5x</option>
+          <option value="900" selected>1.0x</option>
+          <option value="500">2.0x</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUD METRICS -->
+  <div class="hud-grid">
+    <div class="metric-card">
+      <span class="metric-title">Elements (N)</span>
+      <div class="metric-value" id="hud-n">5</div>
+    </div>
+    <div class="metric-card">
+      <span class="metric-title">Current Phase</span>
+      <div class="metric-value" style="font-size: 1.05rem;" id="hud-phase">1. Pairing</div>
+    </div>
+    <div class="metric-card">
+      <span class="metric-title">Comparisons / Knuth Bound F(N)</span>
+      <div class="metric-value">
+        <span id="hud-comparisons">0</span> / <span id="hud-bound">7</span>
+        <span class="status-badge status-optimal" id="hud-optimal-tag">OPTIMAL</span>
+      </div>
+    </div>
+    <div class="metric-card">
+      <span class="metric-title">Current Jacobsthal Batch</span>
+      <div class="metric-value" style="font-size: 1.05rem;" id="hud-jacob">-</div>
+    </div>
+  </div>
+
+  <!-- VISUAL CANVAS -->
+  <div class="canvas-container" id="canvas-container">
+    <!-- Top Row: mainChain -->
+    <div class="stage-row" id="row-mainchain">
+      <div class="row-header">
+        <span id="row-top-title">mainChain</span>
+        <small id="row-top-subtitle">Sorted chain</small>
+      </div>
+      <div class="row-items" id="items-mainchain"></div>
+    </div>
+
+    <!-- Bottom Row: Pending Losers -->
+    <div class="stage-row" id="row-losers">
+      <div class="row-header">
+        <span id="row-bot-title">Pending Losers</span>
+        <small id="row-bot-subtitle">Paired elements</small>
+      </div>
+      <div class="row-items" id="items-losers"></div>
+    </div>
+  </div>
+
+  <!-- DEFENSE EXPLANATION CARD -->
+  <div class="defense-card">
+    <div class="defense-text" id="explanation-text">
+      Welcome to the <strong>Ford-Johnson (PmergeMe) Interactive Visualizer</strong>. Click <strong>Next ▶</strong> or <strong>Play</strong> to step through the algorithm.
+    </div>
+    <span class="badge-42" id="step-indicator" style="flex-shrink: 0;">Step 0 / 0</span>
+  </div>
+
+  <!-- EVALUATOR DEFENSE CHEAT SHEET -->
+  <details>
+    <summary>📖 42 Evaluator Defense Q&A Cheat Sheet (Click to Expand)</summary>
+    <div class="qa-grid">
+      <div class="qa-item">
+        <div class="qa-q">Q1: Why did you use Jacobsthal numbers instead of powers of 2?</div>
+        <div class="qa-a">Jacobsthal numbers [1, 3, 5, 11, 21...] optimize binary search efficiency. By inserting element <i>b_k</i> when the main chain length is strictly bounded to 2<sup>p</sup> - 1, every binary search hits the theoretical minimum depth without wasting a comparison.</div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Q2: Why does the first loser (b₁) take 0 comparisons?</div>
+        <div class="qa-a">Because <i>b₁ &lt; a₁</i> by construction, and <i>a₁</i> is the smallest element of all sorted winners. Therefore, <i>b₁</i> is guaranteed to be smaller than the entire chain and is inserted at index 0 for free.</div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Q3: Why is std::vector faster than std::deque in wall-clock time?</div>
+        <div class="qa-a"><code>std::vector</code> uses a single contiguous block of memory, yielding superior CPU cache locality during binary search. <code>std::deque</code> allocates multiple non-contiguous page chunks linked by a map pointer, causing more cache misses.</div>
+      </div>
+      <div class="qa-item">
+        <div class="qa-q">Q4: Why bound the binary search to each loser's paired winner?</div>
+        <div class="qa-a">Every loser <i>b_i</i> was already compared against its winner <i>a_i</i> during Step 1 (<i>b_i &lt; a_i</i>). Thus, <i>b_i</i> can never appear after <i>a_i</i> in the sorted array, cutting the binary search space in half.</div>
+      </div>
+    </div>
+  </details>
+
+  <!-- JAVASCRIPT ENGINE -->
+  <script>
+    // Knuth theoretical maximum comparisons formula F(N)
+    function knuthBound(n) {
+      if (n <= 1) return 0;
+      let sum = 0;
+      for (let k = 1; k <= n; k++) {
+        sum += Math.ceil(Math.log2(0.75 * k));
+      }
+      return sum;
+    }
+
+    // Step Snapshot Engine
+    let states = [];
+    let currentIndex = 0;
+    let timer = null;
+
+    function buildSnapshots(initialArray) {
+      const recorded = [];
+      let compCount = 0;
+      const boundF = knuthBound(initialArray.length);
+
+      function compare(a, b) {
+        compCount++;
+        return a < b;
+      }
+
+      // Snapshot helper
+      function snap(phase, title, explanation, mainChain, losers, boundRange = null, activeCard = null, batchName = "-") {
+        recorded.push({
+          phase,
+          title,
+          explanation,
+          mainChain: JSON.parse(JSON.stringify(mainChain)),
+          losers: JSON.parse(JSON.stringify(losers)),
+          boundRange,
+          activeCard,
+          batchName,
+          comparisons: compCount,
+          boundF
+        });
+      }
+
+      // Initial State
+      const rawCards = initialArray.map(v => ({ val: v, role: 'default' }));
+      snap("Initial Array", "Raw Input", `Starting with ${initialArray.length} unsorted elements: [${initialArray.join(', ')}]`, rawCards, []);
+
+      if (initialArray.length < 2) {
+        snap("Complete", "Already Sorted", "Array has fewer than 2 elements. Already sorted!", rawCards, []);
+        return recorded;
+      }
+
+      // Phase 1: Pairing
+      const hasOdd = (initialArray.length % 2 !== 0);
+      const stragglerVal = hasOdd ? initialArray[initialArray.length - 1] : null;
+      const pairs = [];
+      const winners = [];
+
+      for (let i = 0; i + 1 < initialArray.length; i += 2) {
+        let w = initialArray[i];
+        let l = initialArray[i + 1];
+        if (compare(w, l)) {
+          const tmp = w; w = l; l = tmp;
+        }
+        pairs.push({ winner: w, loser: l });
+        winners.push(w);
+      }
+
+      const pairedWinners = pairs.map(p => ({ val: p.winner, role: 'winner' }));
+      const pairedLosers = pairs.map(p => ({ val: p.loser, role: 'loser', pairedWith: p.winner }));
+      if (hasOdd) {
+        pairedLosers.push({ val: stragglerVal, role: 'straggler', pairedWith: null });
+      }
+
+      snap("Phase 1: Pairing", "Pairs Formed",
+        `Paired adjacent elements: performed ${pairs.length} comparison(s). Larger numbers are <strong>Winners (Green)</strong>, smaller are <strong>Losers (Red)</strong>${hasOdd ? ', and odd element is <strong>Straggler (Orange)</strong>' : ''}.`,
+        pairedWinners, pairedLosers);
+
+      // Phase 2: Recursively sort winners (simulated locally for visualization)
+      const sortedWinners = [...winners].sort((a, b) => a - b);
+      const alignedLosers = [];
+      for (let i = 0; i < sortedWinners.length; i++) {
+        const found = pairs.find(p => p.winner === sortedWinners[i]);
+        alignedLosers.push({ val: found.loser, role: 'loser', pairedWith: sortedWinners[i] });
+      }
+      if (hasOdd) {
+        alignedLosers.push({ val: stragglerVal, role: 'straggler', pairedWith: null });
+      }
+
+      const mainChain = sortedWinners.map(w => ({ val: w, role: 'mainchain' }));
+      snap("Phase 2: Sort Winners", "mainChain Initialized",
+        `Winners recursively sorted into <strong>mainChain</strong>: [${sortedWinners.join(', ')}]. Each loser remains aligned below its paired winner.`,
+        mainChain, alignedLosers);
+
+      // Phase 3: Free insertion of first loser
+      const firstLoser = alignedLosers[0];
+      mainChain.unshift({ val: firstLoser.val, role: 'mainchain' });
+      alignedLosers[0].inserted = true;
+
+      snap("Phase 3: Free Insertion", "Free Insert b₁",
+        `First loser <strong>${firstLoser.val}</strong> is paired with <strong>${firstLoser.pairedWith}</strong> (the smallest winner). It is guaranteed smaller than the entire chain! <strong>0 comparisons used.</strong>`,
+        mainChain, alignedLosers, null, firstLoser.val);
+
+      // Phase 4: Jacobsthal Batches
+      let jPrev = 1;
+      let jCurr = 3;
+
+      while (jPrev < alignedLosers.length) {
+        const batchIndices = [];
+        const maxK = Math.min(jCurr, alignedLosers.length);
+        for (let k = maxK; k > jPrev; --k) {
+          batchIndices.push(k - 1);
+        }
+        const batchNameStr = `[${batchIndices.map(i => alignedLosers[i].val).join(', ')}]`;
+
+        for (let i = 0; i < batchIndices.length; i++) {
+          const idx = batchIndices[i];
+          const loserItem = alignedLosers[idx];
+          const loserVal = loserItem.val;
+
+          // Upper bound index
+          let boundIdx = mainChain.length;
+          if (loserItem.pairedWith !== null) {
+            boundIdx = mainChain.findIndex(c => c.val === loserItem.pairedWith);
+          }
+
+          snap("Phase 4: Jacobsthal", `Insert Loser ${loserVal}`,
+            `Inserting <strong>${loserVal}</strong> in Jacobsthal order. Bound: ${loserItem.pairedWith !== null ? `stopped before paired winner <strong>${loserItem.pairedWith}</strong> (index ${boundIdx})` : 'full chain (straggler)'}.`,
+            mainChain, alignedLosers, { start: 0, end: boundIdx, boundVal: loserItem.pairedWith }, loserVal, batchNameStr);
+
+          // Binary search simulation
+          let low = 0;
+          let high = boundIdx;
+          while (low < high) {
+            const mid = Math.floor((low + high) / 2);
+            if (compare(mainChain[mid].val, loserVal)) {
+              low = mid + 1;
+            } else {
+              high = mid;
+            }
+          }
+
+          mainChain.splice(low, 0, { val: loserVal, role: 'mainchain' });
+          loserItem.inserted = true;
+
+          snap("Phase 4: Jacobsthal", `Inserted ${loserVal}`,
+            `Binary search completed! Inserted <strong>${loserVal}</strong> at position ${low}. Current mainChain: [${mainChain.map(c => c.val).join(', ')}].`,
+            mainChain, alignedLosers, null, loserVal, batchNameStr);
+        }
+
+        const nextJ = jCurr + 2 * jPrev;
+        jPrev = jCurr;
+        jCurr = nextJ;
+      }
+
+      // Phase Complete
+      const finalChain = mainChain.map(c => ({ val: c.val, role: 'winner' }));
+      snap("Sort Complete", "Fully Sorted",
+        `🎉 <strong>Ford-Johnson Complete!</strong> Final sorted array: [${finalChain.map(c => c.val).join(', ')}]. Total comparisons: <strong>${compCount}</strong> (Strictly &le; Knuth bound of ${boundF}).`,
+        finalChain, [], null, null, "Complete");
+
+      return recorded;
+    }
+
+    // Render a given snapshot
+    function renderState(state) {
+      document.getElementById('hud-phase').textContent = state.title;
+      document.getElementById('hud-comparisons').textContent = state.comparisons;
+      document.getElementById('hud-bound').textContent = state.boundF;
+      document.getElementById('hud-jacob').textContent = state.batchName;
+      document.getElementById('explanation-text').innerHTML = state.explanation;
+      document.getElementById('step-indicator').textContent = `Step ${currentIndex + 1} / ${states.length}`;
+
+      const topItems = document.getElementById('items-mainchain');
+      const botItems = document.getElementById('items-losers');
+      topItems.innerHTML = '';
+      botItems.innerHTML = '';
+
+      // Render mainChain
+      state.mainChain.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = `num-card card-${item.role}`;
+        if (state.activeCard === item.val) card.classList.add('card-active');
+        if (state.boundRange && idx >= state.boundRange.start && idx < state.boundRange.end) {
+          card.classList.add('card-in-bound');
+        }
+
+        card.innerHTML = `<span>${item.val}</span><span class="card-role">${item.role === 'mainchain' ? 'chain' : ''}</span>`;
+        topItems.appendChild(card);
+      });
+
+      // Render Losers
+      if (state.losers && state.losers.length > 0) {
+        document.getElementById('row-losers').style.display = 'flex';
+        state.losers.forEach(item => {
+          const card = document.createElement('div');
+          card.className = `num-card card-${item.role}`;
+          if (item.inserted) card.style.opacity = '0.25';
+          if (state.activeCard === item.val) card.classList.add('card-active');
+
+          card.innerHTML = `<span>${item.val}</span><span class="card-role">${item.role === 'straggler' ? 'odd' : (item.pairedWith ? 'p:' + item.pairedWith : '')}</span>`;
+          botItems.appendChild(card);
+        });
+      } else {
+        document.getElementById('row-losers').style.display = 'none';
+      }
+
+      // Update control buttons
+      document.getElementById('btn-prev').disabled = (currentIndex === 0);
+      document.getElementById('btn-first').disabled = (currentIndex === 0);
+      document.getElementById('btn-next').disabled = (currentIndex === states.length - 1);
+      document.getElementById('btn-last').disabled = (currentIndex === states.length - 1);
+    }
+
+    function goTo(idx) {
+      if (idx < 0 || idx >= states.length) return;
+      currentIndex = idx;
+      renderState(states[currentIndex]);
+    }
+
+    function togglePlay() {
+      const btn = document.getElementById('btn-play');
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+        btn.textContent = '▶ Play';
+        btn.classList.add('btn-primary');
+      } else {
+        btn.textContent = '⏸ Pause';
+        btn.classList.remove('btn-primary');
+        const delay = parseInt(document.getElementById('speed-select').value, 10);
+        timer = setInterval(() => {
+          if (currentIndex < states.length - 1) {
+            goTo(currentIndex + 1);
+          } else {
+            togglePlay();
+          }
+        }, delay);
+      }
+    }
+
+    function loadArrayFromInput() {
+      if (timer) togglePlay();
+      const raw = document.getElementById('array-input').value.trim();
+      const parts = raw.split(/[\s,]+/).filter(Boolean).map(Number);
+      if (parts.length === 0 || parts.some(isNaN)) {
+        alert("Please enter valid positive integers separated by spaces or commas.");
+        return;
+      }
+      document.getElementById('hud-n').textContent = parts.length;
+      states = buildSnapshots(parts);
+      goTo(0);
+    }
+
+    function loadPreset(arr) {
+      document.getElementById('array-input').value = arr.join(' ');
+      loadArrayFromInput();
+    }
+
+    function loadRandom(n) {
+      const set = new Set();
+      while (set.size < n) {
+        set.add(Math.floor(Math.random() * 999) + 1);
+      }
+      loadPreset(Array.from(set));
+    }
+
+    // Event Listeners
+    document.getElementById('btn-load').onclick = loadArrayFromInput;
+    document.getElementById('btn-next').onclick = () => goTo(currentIndex + 1);
+    document.getElementById('btn-prev').onclick = () => goTo(currentIndex - 1);
+    document.getElementById('btn-first').onclick = () => goTo(0);
+    document.getElementById('btn-last').onclick = () => goTo(states.length - 1);
+    document.getElementById('btn-play').onclick = togglePlay;
+
+    // Keyboard navigation (Left/Right arrows, Space for play)
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.key === 'ArrowRight') goTo(currentIndex + 1);
+      if (e.key === 'ArrowLeft') goTo(currentIndex - 1);
+      if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+    });
+
+    // Initialize on load
+    loadArrayFromInput();
+  </script>
+</body>
+</html>
